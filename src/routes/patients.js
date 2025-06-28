@@ -16,7 +16,7 @@ const validatePatient = [
   body('lastName').trim().isLength({ min: 2, max: 50 }),
   body('dateOfBirth').isISO8601().toDate(),
   body('gender').isIn(['male', 'female', 'other', 'prefer_not_to_say']),
-  body('nationalId').optional().matches(/^\d{8}$/),
+  body('nationalId').optional().matches(/^\d{7,8}$/),
   body('phoneNumber').matches(/^(\+254|0)[17]\d{8}$/),
   body('email').optional().isEmail().normalizeEmail(),
   body('address.county').isIn([
@@ -44,10 +44,24 @@ const validateVitalSigns = [
 ];
 
 const validateAllergy = [
-  body('allergen').trim().notEmpty(),
-  body('severity').isIn(['mild', 'moderate', 'severe']),
+  body('allergen').optional().trim().notEmpty().withMessage('Allergen is required'),
+  body('substance').optional().trim().notEmpty().withMessage('Substance is required'),
+  body('severity').isIn(['mild', 'moderate', 'severe']).withMessage('Severity must be mild, moderate, or severe'),
   body('reaction').optional().trim(),
-  body('notes').optional().trim()
+  body('notes').optional().trim(),
+  body('diagnosedDate').optional().isISO8601().withMessage('Diagnosed date must be a valid date'),
+  body('recordedAt').optional().isISO8601().withMessage('Recorded date must be a valid date'),
+  // Custom validation to ensure either allergen or substance is provided
+  (req, res, next) => {
+    const { allergen, substance } = req.body;
+    if (!allergen && !substance) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: [{ msg: 'Either allergen or substance field is required', param: 'allergen' }]
+      });
+    }
+    next();
+  }
 ];
 
 // @route   GET /api/v1/patients
@@ -517,6 +531,24 @@ router.post('/:id/allergies', canAccessPatient('id'), validateAllergy, async (re
       });
     }
 
+    // Fix E1 & E7: Standardize incoming data. Accept 'substance' as an alias for 'allergen' and 'recordedAt' for 'diagnosedDate'.
+    const { allergen, substance, reaction, severity, diagnosedDate, recordedAt } = req.body;
+    
+    const allergyData = {
+      allergen: allergen || substance, // Use 'allergen' if present, otherwise fall back to 'substance'
+      reaction: reaction,
+      severity: severity,
+      diagnosedDate: diagnosedDate || recordedAt || new Date() // Use a specific date or default to now
+    };
+    
+    // Server-side validation to ensure 'allergen' is present
+    if (!allergyData.allergen) {
+      return res.status(400).json({ 
+        error: "Validation failed", 
+        details: "The 'allergen' or 'substance' field is required." 
+      });
+    }
+
     const patient = await Patient.findById(id);
 
     if (!patient) {
@@ -526,25 +558,182 @@ router.post('/:id/allergies', canAccessPatient('id'), validateAllergy, async (re
       });
     }
 
-    await patient.addAllergy(req.body);
+    // Fix E9: Check for duplicate allergy before adding.
+    // We check based on the 'allergen' field, case-insensitive.
+    const alreadyExists = patient.allergies.some(
+      allergy => allergy.allergen.toLowerCase() === allergyData.allergen.toLowerCase()
+    );
+
+    if (alreadyExists) {
+      return res.status(409).json({ 
+        error: "Duplicate Entry", 
+        details: "This allergy has already been recorded for this patient." 
+      });
+    }
+
+    // Add the new allergy
+    patient.allergies.push(allergyData);
+
+    // Save the parent document
+    await patient.save();
+    
+    // Return only the newly added allergy for clarity
+    const newAllergy = patient.allergies[patient.allergies.length - 1];
 
     logger.audit('allergy_added', req.user._id, `patient:${patient.patientId}`, {
       patientId: patient.patientId,
-      allergy: req.body
+      allergy: allergyData
     });
 
-    res.json({
+    res.status(201).json({
       success: true,
       message: 'Allergy added successfully',
-      data: {
-        allergies: patient.allergies
-      }
+      data: newAllergy
     });
   } catch (error) {
     logger.error('Add allergy failed:', error);
     res.status(500).json({
       error: 'Failed to add allergy'
     });
+  }
+});
+
+// @route   GET /api/v1/patients/:id/allergies
+// @desc    Get all allergies for a patient
+// @access  Private
+router.get('/:id/allergies', canAccessPatient('id'), async (req, res) => {
+  const { id } = req.params;
+
+  // Validation guard: Check if the provided 'id' is a valid MongoDB ObjectId format
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    logger.warn(`Invalid ObjectId format received for allergies retrieval: ${id}`, { userId: req.user._id });
+    return res.status(400).json({ error: 'Invalid patient ID format.' });
+  }
+
+  try {
+    // Find patient but only select the 'allergies' field (and _id for context). Highly efficient.
+    const patient = await Patient.findById(id).select('allergies');
+    
+    if (!patient) {
+      logger.warn(`Attempt to get allergies for non-existent patient with ID: ${id}`, { userId: req.user._id });
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    // Return ONLY the allergies array
+    res.status(200).json({ success: true, data: patient.allergies });
+
+  } catch (error) {
+    logger.error('Get allergies failed:', error);
+    res.status(500).json({ error: 'Failed to get allergies' });
+  }
+});
+
+// @route   PATCH /api/v1/patients/:id/allergies/:allergyId
+// @desc    Update a specific allergy for a patient
+// @access  Private
+router.patch('/:id/allergies/:allergyId', canAccessPatient('id'), async (req, res) => {
+  const { id, allergyId } = req.params;
+  const { reaction, severity } = req.body;
+
+  // Validation guard: Check if both IDs are valid MongoDB ObjectId format
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    logger.warn(`Invalid ObjectId format received for allergy update (patient): ${id}`, { userId: req.user._id });
+    return res.status(400).json({ error: 'Invalid patient ID format.' });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(allergyId)) {
+    logger.warn(`Invalid ObjectId format received for allergy update (allergy): ${allergyId}`, { userId: req.user._id });
+    return res.status(400).json({ error: 'Invalid allergy ID format.' });
+  }
+
+  try {
+    const patient = await Patient.findById(id);
+    if (!patient) {
+      logger.warn(`Attempt to update allergy for non-existent patient with ID: ${id}`, { userId: req.user._id });
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    // Find the sub-document by its _id
+    const allergy = patient.allergies.id(allergyId);
+    if (!allergy) {
+      logger.warn(`Attempt to update non-existent allergy with ID: ${allergyId}`, { userId: req.user._id });
+      return res.status(404).json({ error: 'Allergy not found' });
+    }
+
+    // Update its properties
+    if (reaction) allergy.reaction = reaction;
+    if (severity) allergy.severity = severity;
+    
+    await patient.save();
+
+    logger.audit('allergy_updated', req.user._id, `patient:${patient.patientId}`, {
+      patientId: patient.patientId,
+      allergyId: allergyId,
+      updatedFields: Object.keys(req.body)
+    });
+
+    res.status(200).json({ 
+      success: true,
+      message: 'Allergy updated successfully', 
+      data: allergy 
+    });
+
+  } catch (error) {
+    logger.error('Update allergy failed:', error);
+    res.status(500).json({ error: 'Failed to update allergy' });
+  }
+});
+
+// @route   DELETE /api/v1/patients/:id/allergies/:allergyId
+// @desc    Delete a specific allergy for a patient
+// @access  Private
+router.delete('/:id/allergies/:allergyId', canAccessPatient('id'), async (req, res) => {
+  const { id, allergyId } = req.params;
+
+  // Validation guard: Check if both IDs are valid MongoDB ObjectId format
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    logger.warn(`Invalid ObjectId format received for allergy deletion (patient): ${id}`, { userId: req.user._id });
+    return res.status(400).json({ error: 'Invalid patient ID format.' });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(allergyId)) {
+    logger.warn(`Invalid ObjectId format received for allergy deletion (allergy): ${allergyId}`, { userId: req.user._id });
+    return res.status(400).json({ error: 'Invalid allergy ID format.' });
+  }
+
+  try {
+    const patient = await Patient.findById(id);
+    if (!patient) {
+      logger.warn(`Attempt to delete allergy for non-existent patient with ID: ${id}`, { userId: req.user._id });
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    // Find the specific allergy to remove
+    const allergyExists = patient.allergies.some(allergy => allergy._id.toString() === allergyId);
+    if (!allergyExists) {
+      logger.warn(`Attempt to delete non-existent allergy with ID: ${allergyId}`, { userId: req.user._id });
+      return res.status(404).json({ error: 'Allergy not found' });
+    }
+    
+    // Remove the sub-document using pull
+    patient.allergies.pull({ _id: allergyId });
+
+    // Save the parent document to persist the change
+    await patient.save();
+
+    logger.audit('allergy_deleted', req.user._id, `patient:${patient.patientId}`, {
+      patientId: patient.patientId,
+      allergyId: allergyId
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Allergy deleted successfully' 
+    });
+
+  } catch (error) {
+    logger.error('Delete allergy failed:', error);
+    res.status(500).json({ error: 'Failed to delete allergy' });
   }
 });
 

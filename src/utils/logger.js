@@ -107,5 +107,18 @@ logger.audit = (action, userId, resource, details = {}) => {
   logger.info('AUDIT_LOG', { action, userId, resource, timestamp: new Date().toISOString(), ...redact(details) });
 };
 
+// ✅ --- START OF FIX --- ✅
+// Add the missing logger.security method.
+// Security events are often logged at 'warn' level to make them stand out.
+logger.security = (event, userId, details = {}) => {
+  logger.warn('SECURITY_EVENT', {
+    event,
+    userId: userId || 'N/A',
+    timestamp: new Date().toISOString(),
+    ...redact(details)
+  });
+};
+// ✅ --- END OF FIX --- ✅
+
 console.log('✅ Winston Logger: Instance created and configured.');
 module.exports = logger; 

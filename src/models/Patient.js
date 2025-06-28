@@ -1,12 +1,14 @@
 const mongoose = require('mongoose');
 const logger = require('../utils/logger');
+const shortid = require('shortid');
 
 const patientSchema = new mongoose.Schema({
   // Basic Information
   patientId: {
     type: String,
-    required: true,
-    unique: true
+    default: shortid.generate,
+    unique: true,
+    required: true
   },
   
   // Demographics
@@ -49,12 +51,8 @@ const patientSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
     trim: true,
-    validate: {
-      validator: function(v) {
-        return /^\d{8}$/.test(v);
-      },
-      message: 'National ID must be exactly 8 digits'
-    }
+    match: [/^\d{7,8}$/, 'Please provide a valid 7 or 8 digit National ID'],
+    required: true
   },
   
   // Detailed Address (Kenya-specific)

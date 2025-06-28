@@ -193,26 +193,42 @@ SMART_CONTRACT_ADDRESS=your-contract-address
 
 ## 🔐 Security Features
 
-### Authentication & Authorization
-- JWT-based authentication
-- Role-based access control (RBAC)
-- Password hashing with bcrypt
-- Session management
-- Token refresh mechanism
+- **JWT-based authentication**: All endpoints require a valid JWT for access.
+- **Role-Based Access Control (RBAC)**: Fine-grained permissions enforced via middleware. Only users with the correct role (e.g., 'admin') can access certain endpoints.
+- **Password Hashing**: All user passwords are hashed with bcrypt before storage.
+- **Centralized Authentication & Authorization Middleware**: See `src/middleware/authMiddleware.js` for robust JWT verification and RBAC enforcement.
+- **Audit Logging**: All sensitive actions (e.g., user deletion, admin actions) are logged with user ID, action, and resource for compliance and traceability.
+- **Input Validation**: (Planned) All incoming data will be validated and sanitized to prevent injection attacks.
+- **Secrets Management**: All secrets and credentials are stored in environment variables, never in code.
+- **Principle of Least Privilege**: Users only have access to the minimum required for their role.
 
-### Data Protection
-- AES-256 encryption for sensitive data
-- Input validation and sanitization
-- SQL injection prevention
-- XSS protection
-- CSRF protection
+## 👮‍♂️ Admin Endpoints
 
-### API Security
-- Rate limiting
-- Request validation
-- Error handling without information leakage
-- Secure headers with Helmet
-- CORS configuration
+The following endpoints are only accessible to users with the `admin` role. All are protected by both authentication and RBAC middleware:
+
+- `GET /api/v1/admins` — List all admin users
+- `GET /api/v1/users` — List all users
+- `DELETE /api/v1/admins/:id` — Delete a user (cannot delete self)
+
+See `src/routes/adminRoutes.js` for implementation details.
+
+## 🧑‍💻 Model Updates
+
+### User Model (`src/models/User.js`)
+- Passwords are hashed with bcrypt before saving.
+- Password comparison uses a secure method (`matchPassword`).
+- Role field is enforced and validated.
+- Email is unique and validated.
+
+### Patient Model (`src/models/Patient.js`)
+- Uses `shortid` for a unique, human-readable `patientId`.
+- `nationalId` is validated for 7 or 8 digits and is unique.
+- `createdBy` references the user who created the patient record.
+
+## 🛡️ Middleware
+
+- **Authentication & Authorization**: See `src/middleware/authMiddleware.js` for JWT and RBAC logic.
+- **Audit Logging**: All admin actions are logged for security and compliance.
 
 ## 🏗️ Database Schema
 

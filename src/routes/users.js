@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const User = require('../models/User');
 const logger = require('../utils/logger');
+const { authenticate, authorize } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -31,76 +32,43 @@ const validatePassword = [
   body('password').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
 ];
 
-// @route   GET /api/v1/users
-// @desc    Get all users with pagination and filtering
-// @access  Private (Admin only)
-router.get('/', requireRole(['admin']), async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    // Build query
-    const query = {};
-    
-    if (req.query.search) {
-      const searchRegex = new RegExp(req.query.search, 'i');
-      query.$or = [
-        { fullName: searchRegex },
-        { email: searchRegex },
-        { userId: searchRegex },
-        { licenseNumber: searchRegex }
-      ];
-    }
-
-    if (req.query.role) {
-      query.role = req.query.role;
-    }
-
-    if (req.query.department) {
-      query.department = req.query.department;
-    }
-
-    if (req.query.county) {
-      query['address.county'] = req.query.county;
-    }
-
-    if (req.query.isActive !== undefined) {
-      query.isActive = req.query.isActive === 'true';
-    }
-
-    // Execute query
-    const users = await User.find(query)
-      .select('-password -passwordResetToken')
-      .sort({ fullName: 1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await User.countDocuments(query);
-
-    logger.audit('users_listed', req.user.userId, 'users', {
-      count: users.length,
-      page,
-      limit
-    });
-
-    res.json({
-      success: true,
-      data: {
-        users: users.map(u => u.getSummary()),
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit)
-        }
+// GET /api/v1/users - Get ALL registered users (admin only)
+router.get(
+  '/',
+  authenticate,
+  authorize('admin'),
+  async (req, res) => {
+    try {
+      // Additional safety check for req.user
+      if (!req.user || !req.user._id) {
+        logger.error('CRITICAL_ERROR: req.user is not properly set in users route');
+        return res.status(500).json({ error: 'Server configuration error' });
       }
-    });
-  } catch (error) {
-    logger.error('Get users failed:', error);
-    res.status(500).json({
-      error: 'Failed to get users'
-    });
+
+      const users = await User.find({}).select('-password');
+      logger.audit('FETCH_ALL_USERS_SUCCESS', req.user._id, 'All Users List');
+      res.status(200).json({ success: true, count: users.length, data: users });
+    } catch (err) {
+      const accessorId = req.user ? req.user._id : 'N/A';
+      logger.error('FETCH_ALL_USERS_FAILED', { userId: accessorId, error: err.message });
+      res.status(500).json({ error: 'Server error while fetching users' });
+    }
+  }
+);
+
+// GET /api/v1/users/me - Get current user profile
+router.get('/me', authenticate, (req, res) => {
+  try {
+    // Additional safety check for req.user
+    if (!req.user) {
+      logger.error('CRITICAL_ERROR: req.user is not properly set in /me route');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+    
+    res.status(200).json({ success: true, data: req.user });
+  } catch (err) {
+    logger.error('FETCH_USER_PROFILE_FAILED', { error: err.message });
+    res.status(500).json({ error: 'Server error while fetching user profile' });
   }
 });
 
@@ -109,13 +77,6 @@ router.get('/', requireRole(['admin']), async (req, res) => {
 // @access  Private (Admin or self)
 router.get('/:id', async (req, res) => {
   try {
-    // Users can only view their own profile unless they're admin
-    if (req.params.id !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({
-        error: 'Access denied'
-      });
-    }
-
     const user = await User.findOne({ 
       $or: [
         { userId: req.params.id },
@@ -129,15 +90,19 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    logger.audit('user_viewed', req.user.userId, `user:${user.userId}`, {
-      viewedUserId: user.userId
-    });
+    // Hardened authorization check
+    if (req.user.role !== 'admin' && user._id.toString() !== req.user._id.toString()) {
+      logger.warn('SECURITY_EVENT: Unauthorized access attempt on user profile.', {
+        accessorId: req.user._id,
+        targetId: req.params.id
+      });
+      return res.status(403).json({ error: 'Forbidden: You do not have permission to access this resource.' });
+    }
 
+    logger.audit('FETCH_USER_SUCCESS', req.user._id, `User ID: ${user._id}`);
     res.json({
       success: true,
-      data: {
-        user: user.getSummary()
-      }
+      data: user.getSummary()
     });
   } catch (error) {
     logger.error('Get user failed:', error);

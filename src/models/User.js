@@ -252,27 +252,17 @@ userSchema.index({ department: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ createdAt: -1 });
 
-// Pre-save middleware to hash password
-userSchema.pre('save', async function(next) {
-  try {
-    if (this.isModified('password')) {
-      const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
-      this.password = await bcrypt.hash(this.password, saltRounds);
-    }
-    next();
-  } catch (error) {
-    next(error);
-  }
+// Password hashing middleware
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
-// Instance method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  try {
-    return await bcrypt.compare(candidatePassword, this.password);
-  } catch (error) {
-    logger.error('Password comparison failed:', error);
-    return false;
-  }
+// Password comparison method
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 // Instance method to generate JWT token
@@ -430,7 +420,7 @@ userSchema.statics.authenticate = async function(email, password) {
       throw new Error('Account is locked due to too many failed login attempts');
     }
     
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await user.matchPassword(password);
     
     if (!isMatch) {
       await user.incLoginAttempts();
