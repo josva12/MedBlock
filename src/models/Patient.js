@@ -609,9 +609,9 @@ patientSchema.methods.getSummaryForRole = function(userRole) {
     county: patientObject.address ? patientObject.address.county : undefined,
     isActive: patientObject.isActive,
     isVerified: patientObject.isVerified,
-    allergies: patientObject.allergies ? patientObject.allergies.length : 0,
-    medicalHistory: patientObject.medicalHistory ? patientObject.medicalHistory.length : 0,
-    vitalSigns: patientObject.vitalSigns ? patientObject.vitalSigns.length : 0,
+    allergies: Array.isArray(patientObject.allergies) ? patientObject.allergies.length : 0,
+    medicalHistory: Array.isArray(patientObject.medicalHistory) ? patientObject.medicalHistory.length : 0,
+    vitalSigns: Array.isArray(patientObject.vitalSigns) ? patientObject.vitalSigns.length : 0,
     createdBy: patientObject.createdBy,
     updatedBy: patientObject.updatedBy,
     createdAt: patientObject.createdAt,
@@ -624,16 +624,22 @@ patientSchema.methods.getSummaryForRole = function(userRole) {
   };
 
   // Conditional PII handling based on role
-  if (userRole === 'admin') {
-    // Admin gets full access to all PII
+  if (userRole === 'admin' || userRole === 'doctor') {
+    // Admin and Doctor get full access to all PII and sensitive arrays
     summary.phoneNumber = patientObject.phoneNumber;
     summary.email = patientObject.email;
     summary.nationalId = patientObject.nationalId;
     summary.address = patientObject.address;
     summary.emergencyContact = patientObject.emergencyContact;
     summary.insuranceDetails = patientObject.insuranceDetails;
+
+    // Include assignment history and files for admin/doctor roles
+    // Ensure these are arrays before spreading/including
+    summary.assignmentHistory = Array.isArray(patientObject.assignmentHistory) ? patientObject.assignmentHistory : [];
+    summary.files = Array.isArray(patientObject.files) ? patientObject.files : [];
+
   } else {
-    // Non-admin roles get masked PII
+    // Non-admin/doctor roles get masked PII
     summary.phoneNumber = maskPhoneNumber(patientObject.phoneNumber);
     summary.email = maskEmail(patientObject.email);
     summary.nationalId = maskNationalId(patientObject.nationalId);

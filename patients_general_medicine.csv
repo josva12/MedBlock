@@ -1,0 +1,2 @@
+patientId,firstName,lastName,nationalId,dateOfBirth,gender,phoneNumber,email,county,assignedDepartment,checkInStatus,createdAt,createdBy,assignedDoctor
+"zqNZ7FQa2","LinkedV4","RecordV4","1000007",Sat Feb 02 1991 03:00:00 GMT+0300 (East Africa Time),"female","+254712345678","linked.record.v4@example.com","Nairobi","General Medicine","not_admitted",Sat Jun 28 2025 05:50:50 GMT+0300 (East Africa Time),"Joshua Varix","Dr. Test User"

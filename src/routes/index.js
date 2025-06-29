@@ -1,6 +1,8 @@
 console.log('✅ Main router (src/routes/index.js) loaded');
 const express = require('express');
 const router = express.Router();
+const upload = require('../config/multerConfig'); // Make sure multerConfig is accessible
+const logger = require('../utils/logger'); // Assuming your logger is available
 
 // --- Import Route Files ---
 const authRoutes = require('./auth');
@@ -9,6 +11,41 @@ const medicalRecordRoutes = require('./medicalRecords');
 const userRoutes = require('./users'); // For general user routes like GET /users/:id
 const adminRoutes = require('./adminRoutes'); // Specifically for admin-only management routes
 const vitalSignRoutes = require('./vitalSigns'); // For vital signs management
+
+// --- TEMPORARY DIAGNOSTIC ROUTE - ADD THIS BLOCK ---
+// This route MUST be defined and used BEFORE any general authentication middleware
+// that might be applied to '/api/v1/*'
+router.post('/temp-upload-test', upload.single('file'), (req, res) => {
+    logger.info('--- TEMP UPLOAD TEST ROUTE HIT ---');
+    logger.info('req.file:', req.file);
+    logger.info('req.body:', req.body);
+
+    if (req.file) {
+        res.status(200).json({
+            success: true,
+            message: 'File received successfully by temporary test route!',
+            file: {
+                filename: req.file.filename,
+                originalname: req.file.originalname,
+                mimetype: req.file.mimetype,
+                size: req.file.size,
+                path: req.file.path,
+                destination: req.file.destination
+            },
+            body: req.body
+        });
+    } else {
+        res.status(400).json({
+            success: false,
+            message: 'No file received by temporary test route or Multer processing failed.',
+            debug: { 
+                multerError: req.fileError ? req.fileError.message : 'Unknown Multer error',
+                body: req.body // Show body even if file is missing
+            }
+        });
+    }
+});
+// --- END TEMPORARY DIAGNOSTIC ROUTE ---
 
 // --- Public Health & API Info Endpoints ---
 router.get('/health', (req, res) => {

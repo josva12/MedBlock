@@ -8,6 +8,7 @@ A comprehensive, production-ready healthcare management system built with Node.j
 - **Patient Management**: Complete patient lifecycle management with Kenyan-specific fields
 - **Medical Records**: Secure, encrypted medical records with blockchain integration
 - **Vital Signs Management**: Comprehensive medical checklist with draft saving capabilities
+- **File Upload System**: Secure file uploads for medical reports, prescriptions, lab results, and X-rays
 - **User Management**: Role-based access control for healthcare professionals
 - **Encounter Tracking**: Comprehensive hospital visit and treatment tracking
 - **Authentication & Security**: JWT-based authentication with advanced security features
@@ -65,162 +66,165 @@ A comprehensive, production-ready healthcare management system built with Node.j
 ## 📁 Project Structure
 
 ```
-src/
-├── config/           # Configuration files
-│   └── database.js   # MongoDB connection
-├── controllers/      # Route controllers
-├── database/         # Database migrations and seeders
-│   ├── migrations/
-│   └── seeders/
-├── logs/            # Application logs
-├── middleware/      # Express middleware
-│   ├── auth.js      # Authentication middleware
-│   └── errorHandler.js
-├── models/          # Mongoose schemas
-│   ├── Patient.js
-│   ├── User.js
-│   ├── MedicalRecord.js
-│   ├── VitalSign.js
-│   └── Encounter.js
-├── routes/          # API routes
-│   ├── auth.js
-│   ├── patients.js
-│   ├── medicalRecords.js
-│   ├── vitalSigns.js
-│   ├── users.js
-│   └── index.js
-├── services/        # Business logic
-├── uploads/         # File uploads
-│   ├── documents/
-│   ├── images/
-│   └── reports/
-├── utils/           # Utility functions
-│   ├── encryption.js
-│   ├── logger.js
-│   ├── masking.js   # PII masking utilities
-│   └── validation.js # Input validation utilities
-├── server.js        # Main application file
-└── documentation/   # System documentation
-    ├── PII_MASKING_IMPLEMENTATION.md
-    ├── PATIENT_SORTING_GUIDE.md
-    └── VITAL_SIGNS_IMPLEMENTATION.md
+MedBlock/
+├── src/
+│   ├── config/
+│   │   ├── database.js          # Database configuration
+│   │   └── multerConfig.js      # File upload configuration
+│   ├── controllers/             # Route controllers
+│   ├── database/
+│   │   ├── migrations/          # Database migrations
+│   │   └── seeders/            # Database seeders
+│   ├── logs/                   # Application logs
+│   ├── middleware/
+│   │   ├── auth.js             # Authentication middleware
+│   │   ├── authMiddleware.js   # JWT authentication
+│   │   └── errorHandler.js     # Error handling middleware
+│   ├── models/
+│   │   ├── Encounter.js        # Hospital encounter model
+│   │   ├── MedicalRecord.js    # Medical record model
+│   │   ├── Patient.js          # Patient model
+│   │   ├── User.js             # User model
+│   │   └── VitalSign.js        # Vital signs model
+│   ├── routes/
+│   │   ├── adminRoutes.js      # Admin routes
+│   │   ├── auth.js             # Authentication routes
+│   │   ├── index.js            # Main router
+│   │   ├── medicalRecords.js   # Medical record routes
+│   │   ├── patients.js         # Patient routes
+│   │   └── vitalSigns.js       # Vital signs routes
+│   ├── services/               # Business logic services
+│   ├── uploads/                # File upload storage
+│   │   ├── documents/          # Medical reports, prescriptions, lab results
+│   │   ├── images/             # X-rays and medical images
+│   │   ├── others/             # Miscellaneous files
+│   │   └── reports/            # Generated reports
+│   ├── utils/
+│   │   ├── encryption.js       # Data encryption utilities
+│   │   ├── logger.js           # Logging utilities
+│   │   └── masking.js          # PII masking utilities
+│   └── server.js               # Main server file
+├── logs/                       # Application logs
+├── .env                        # Environment variables
+├── .gitignore                  # Git ignore file
+├── package.json                # Dependencies and scripts
+└── README.md                   # Project documentation
 ```
 
 ## 🔧 Configuration
 
 ### Environment Variables
-
-Create a `.env` file based on `env.example`:
+Create a `.env` file in the root directory:
 
 ```env
 # Server Configuration
+PORT=3000
 NODE_ENV=development
-PORT=5000
-API_VERSION=v1
 
-# Database
+# Database Configuration
 MONGODB_URI=mongodb://localhost:27017/medblock
-MONGODB_OPTIONS={}
 
-# Security
-JWT_SECRET=your-super-secret-jwt-key-32-chars
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-here
 JWT_EXPIRES_IN=24h
-JWT_REFRESH_SECRET=your-refresh-secret-key
-JWT_REFRESH_EXPIRES_IN=7d
-BCRYPT_ROUNDS=12
 
-# Encryption
-ENCRYPTION_KEY=your-32-character-encryption-key
-ENCRYPTION_ALGORITHM=aes-256-gcm
+# Encryption Configuration
+AES_KEY=your-32-character-aes-encryption-key
 
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
+# File Upload Configuration
+MAX_FILE_SIZE=10485760  # 10MB in bytes
+ALLOWED_FILE_TYPES=image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document
+```
 
-# CORS
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+### File Upload Configuration
+The system supports secure file uploads with the following configuration:
 
-# Logging
-LOG_LEVEL=info
-LOG_FILE_PATH=./logs/app.log
+- **Storage Process**: Files are first uploaded to a temporary directory (`src/uploads/temp/`) and then moved to their final categorized location based on file type
+- **Storage Paths**: Files are organized by type in `src/uploads/`
+  - `documents/` - Medical reports, prescriptions, lab results
+  - `images/` - X-rays and medical images
+  - `others/` - Miscellaneous files
+  - `reports/` - Generated reports
+  - `temp/` - Temporary upload directory (automatically cleaned up)
 
-# Redis (Optional)
-REDIS_URL=redis://localhost:6379
+- **File Types Supported**:
+  - Images: JPEG, PNG, GIF
+  - Documents: PDF, DOC, DOCX
+  - Maximum file size: 5MB
 
-# Email (Optional)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
+- **Upload Endpoint**: `POST /api/v1/patients/:id/files`
+  - Requires authentication
+  - Accepts multipart/form-data
+  - Parameters: `file` (file), `fileType` (string), `description` (optional)
 
-# SMS (Optional)
-TWILIO_ACCOUNT_SID=your-twilio-sid
-TWILIO_AUTH_TOKEN=your-twilio-token
-TWILIO_PHONE_NUMBER=+254700000000
+## 🚀 Usage Examples
 
-# Blockchain (Optional)
-ETHEREUM_NETWORK=testnet
-ETHEREUM_PRIVATE_KEY=your-private-key
-SMART_CONTRACT_ADDRESS=your-contract-address
+### File Upload Example
+```bash
+# Upload a medical report for a patient
+curl -X POST http://localhost:3000/api/v1/patients/507f1f77bcf86cd799439011/files \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@medical_report.pdf" \
+  -F "fileType=medical_report" \
+  -F "description=Patient's latest blood test results"
+
+# Upload an X-ray image
+curl -X POST http://localhost:3000/api/v1/patients/507f1f77bcf86cd799439011/files \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@chest_xray.jpg" \
+  -F "fileType=xray" \
+  -F "description=Chest X-ray showing normal findings"
+```
+
+### Patient Management Example
+```bash
+# Create a new patient
+curl -X POST http://localhost:3000/api/v1/patients \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "firstName": "John",
+    "lastName": "Doe",
+    "dateOfBirth": "1990-05-15",
+    "gender": "male",
+    "nationalId": "12345678",
+    "phoneNumber": "+254700000000",
+    "email": "john.doe@email.com",
+    "address": {
+      "street": "123 Main St",
+      "city": "Nairobi",
+      "county": "Nairobi",
+      "postalCode": "00100"
+    }
+  }'
 ```
 
 ## 📚 API Documentation
 
-### Authentication Endpoints
+### API Endpoints
 
+#### Authentication
 - `POST /api/v1/auth/login` - User login
 - `POST /api/v1/auth/register` - User registration
-- `POST /api/v1/auth/refresh` - Refresh access token
 - `POST /api/v1/auth/logout` - User logout
-- `POST /api/v1/auth/forgot-password` - Request password reset
-- `POST /api/v1/auth/reset-password` - Reset password
-- `GET /api/v1/auth/me` - Get current user profile
-- `PUT /api/v1/auth/me` - Update current user profile
 
-### Patient Endpoints
-
-#### Core Patient Operations
-- `GET /api/v1/patients` - Get all patients (with sorting, filtering, pagination)
-- `GET /api/v1/patients/:id` - Get patient by ID
+#### Patients
+- `GET /api/v1/patients` - Get all patients (with filtering, sorting, pagination)
 - `POST /api/v1/patients` - Create new patient
+- `GET /api/v1/patients/:id` - Get patient by ID
 - `PUT /api/v1/patients/:id` - Update patient
 - `DELETE /api/v1/patients/:id` - Delete patient
+- `POST /api/v1/patients/:id/files` - Upload files for patient
 
-#### Advanced Patient Operations
-- `POST /api/v1/patients/:id/vital-signs` - Add vital signs
-- `POST /api/v1/patients/:id/allergies` - Add allergy
-- `GET /api/v1/patients/:id/vital-signs` - Get patient vital signs
-- `PATCH /api/v1/patients/:id/checkin` - Update check-in status
-- `PATCH /api/v1/patients/:id/assign` - Assign doctor to patient
-- `GET /api/v1/patients/statistics/county` - Get county statistics
-- `GET /api/v1/patients/export` - Export patient data
-
-#### Patient Query Parameters
-
-**Sorting (New Format):**
-```
-GET /api/v1/patients?sortBy=fullName&sortOrder=asc
-GET /api/v1/patients?sortBy=createdAt&sortOrder=desc
-GET /api/v1/patients?sortBy=age&sortOrder=desc
-```
-
-**Sorting (Legacy Format):**
-```
-GET /api/v1/patients?sort=fullName
-GET /api/v1/patients?sort=-createdAt
-```
-
-**Filtering:**
-```
-GET /api/v1/patients?filterBy=gender&filterValue=male
-GET /api/v1/patients?filterBy=county&filterValue=Nairobi
-GET /api/v1/patients?filterBy=isActive&filterValue=true
-```
-
-**Combined Operations:**
-```
-GET /api/v1/patients?sortBy=fullName&sortOrder=asc&filterBy=county&filterValue=Nairobi&page=1&limit=20
-```
+#### Vital Signs
+- `GET /api/v1/vital-signs` - Get all vital signs
+- `POST /api/v1/vital-signs` - Create new vital signs
+- `GET /api/v1/vital-signs/:id` - Get vital signs by ID
+- `PUT /api/v1/vital-signs/:id` - Update vital signs
+- `DELETE /api/v1/vital-signs/:id` - Delete vital signs
+- `GET /api/v1/patients/:id/vital-signs` - Get vital signs for specific patient
+- `POST /api/v1/vital-signs/:id/finalize` - Finalize draft vital signs
+- `POST /api/v1/vital-signs/:id/amend` - Amend finalized vital signs
 
 ### Medical Records Endpoints
 
@@ -230,49 +234,6 @@ GET /api/v1/patients?sortBy=fullName&sortOrder=asc&filterBy=county&filterValue=N
 - `PUT /api/v1/medical-records/:id` - Update medical record
 - `DELETE /api/v1/medical-records/:id` - Delete medical record
 - `GET /api/v1/medical-records/patient/:patientId` - Get patient records
-
-### Vital Signs Endpoints
-
-#### Core Vital Signs Operations
-- `POST /api/v1/vital-signs` - Create vital sign record (draft or final)
-- `GET /api/v1/vital-signs` - Get all vital signs (with filtering, pagination)
-- `GET /api/v1/vital-signs/:id` - Get specific vital sign record
-- `PUT /api/v1/vital-signs/:id` - Update draft vital sign record
-- `DELETE /api/v1/vital-signs/:id` - Delete draft vital sign record
-
-#### Vital Signs Status Management
-- `PATCH /api/v1/vital-signs/:id/finalize` - Mark draft as final
-- `PATCH /api/v1/vital-signs/:id/amend` - Mark vital sign as amended with reason
-
-#### Patient-Specific Vital Signs
-- `GET /api/v1/vital-signs/patient/:patientId` - Get all vital signs for a patient
-- `GET /api/v1/vital-signs/patient/:patientId?status=draft` - Get draft vital signs for a patient
-
-#### Vital Signs Query Parameters
-```
-GET /api/v1/vital-signs?patientId=xxx&status=draft&page=1&limit=20
-GET /api/v1/vital-signs?sortBy=recordedAt&sortOrder=desc&startDate=2024-01-01
-GET /api/v1/vital-signs?status=final&sortBy=heartRate&sortOrder=asc
-```
-
-#### Vital Signs Data Structure
-```json
-{
-  "patientId": "507f1f77bcf86cd799439011",
-  "status": "draft",
-  "temperature": { "value": 37.2, "unit": "C" },
-  "bloodPressure": { "systolic": 120, "diastolic": 80 },
-  "heartRate": 72,
-  "respiratoryRate": 16,
-  "oxygenSaturation": 98,
-  "weight": { "value": 70, "unit": "kg" },
-  "height": { "value": 175, "unit": "cm" },
-  "bmi": 22.9,
-  "painLevel": 2,
-  "bloodGlucose": { "value": 95, "unit": "mg/dL" },
-  "notes": "Patient appears healthy"
-}
-```
 
 ### User Management Endpoints
 
@@ -299,6 +260,13 @@ GET /api/v1/vital-signs?status=final&sortBy=heartRate&sortOrder=asc
 - **Encrypted Storage**: AES-256 encryption for sensitive medical data
 - **Input Validation**: Comprehensive validation to prevent injection attacks
 - **Rate Limiting**: Protection against abuse and DDoS attacks
+
+### Rate Limiting & Cross-Cutting Concerns
+- **Mutation Rate Limiting**: 50 requests per 15-minute window for all mutation endpoints (POST, PUT, PATCH, DELETE)
+- **Mass Operation Prevention**: No general bulk update/delete endpoints without explicit IDs
+- **Safe Bulk Operations**: Bulk delete operations perform soft deletes (isActive: false) rather than hard deletes
+- **Testing Configuration**: Rate limits can be temporarily reduced for testing purposes
+- **Standard Headers**: Rate limit information included in response headers
 
 ## 📊 Data Management Features
 
@@ -376,6 +344,9 @@ API responses include debugging data for troubleshooting:
 - ✅ **Status Tracking**: Draft, final, and amended status with audit trails
 - ✅ **Automatic Calculations**: BMI calculation from weight and height
 - ✅ **Comprehensive Validation**: Medical range validation for all vital measurements
+- ✅ **Rate Limiting**: Production-ready rate limiting with 50 requests per 15-minute window
+- ✅ **Cross-Cutting Concerns**: Comprehensive testing of rate limiting and mass operation prevention
+- ✅ **File Upload Security**: Enhanced file upload system with proper validation and storage
 
 ## 🤝 Contributing
 

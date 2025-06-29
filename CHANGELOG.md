@@ -570,4 +570,29 @@
   - Express.js and MongoDB dependencies
   - Development tools configuration
   - Environment variable setup
-  - Basic project structure 
+  - Basic project structure
+
+### Added
+- **File Upload System**: Comprehensive file upload functionality for patient records
+  - New endpoint: `POST /api/v1/patients/:id/files` for uploading patient files
+  - Support for medical reports, prescriptions, lab results, and X-rays
+  - Organized file storage in `src/uploads/` with type-based subdirectories
+  - File type validation and size limits (10MB max)
+  - Multer configuration with proper error handling and logging
+  - Audit logging for all file upload operations
+
+### Fixed
+- **Multer Configuration**: Fixed file upload path issue where files were incorrectly routed to 'others' folder
+  - Added proper fileType parsing and validation in destination function
+  - Enhanced logging to debug fileType reception
+  - Improved error handling for invalid fileType values
+  - Normalized fileType casing and whitespace handling
+
+### Changed
+- **Documentation**: Updated README with comprehensive file upload documentation
+  - Added file upload configuration section
+  - Included usage examples for file uploads
+  - Updated API endpoints documentation
+  - Added file storage structure explanation
+
+## [1.0.0] - 2024-01-XX 

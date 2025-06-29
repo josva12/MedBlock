@@ -5,18 +5,293 @@ const Patient = require('../models/Patient');
 const logger = require('../utils/logger');
 const mongoose = require('mongoose');
 const rateLimit = require('express-rate-limit');
+const upload = require('../config/multerConfig'); // Import multer configuration
+const fs = require('fs').promises; // Use fs.promises for async file operations
+const path = require('path'); // Import path module
+const multer = require('multer');
+const { validateObjectId } = require('../utils/validation'); // UNCOMMENT THIS
 
 const router = express.Router();
 
 // Rate limiting for mutation endpoints
 const mutationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // limit each IP to 50 requests per windowMs
+  max: 50, // REVERTED TO PRODUCTION VALUE
   message: {
     error: 'Too many requests from this IP, please try again after 15 minutes.'
   },
   standardHeaders: true,
   legacyHeaders: false,
+});
+
+// Temporary test route for file upload (remove in production) - MUST BE BEFORE AUTH MIDDLEWARE
+router.post('/:id/files/test', async (req, res) => {
+    try {
+        const patientId = req.params.id;
+        const { fileType, description } = req.body;
+        
+        logger.info(`Test upload - patientId: ${patientId}, fileType: ${fileType}`);
+
+        // Create a custom multer configuration for this specific upload
+        const customStorage = multer.diskStorage({
+            destination: (req, file, cb) => {
+                // Use the fileType from the route handler (more reliable)
+                let uploadPath;
+                
+                logger.info(`Custom multer destination: fileType from route: ${fileType}, type: ${typeof fileType}`);
+
+                // Normalize fileType
+                const normalizedFileType = typeof fileType === 'string' ? fileType.toLowerCase().trim() : 'other';
+                
+                if (['medical_report', 'prescription', 'lab_result'].includes(normalizedFileType)) {
+                    uploadPath = path.join(__dirname, '..', 'uploads', 'documents');
+                    logger.info(`File will be saved to documents folder for fileType: ${normalizedFileType}`);
+                } else if (normalizedFileType === 'xray') {
+                    uploadPath = path.join(__dirname, '..', 'uploads', 'images');
+                    logger.info(`File will be saved to images folder for fileType: ${normalizedFileType}`);
+                } else {
+                    uploadPath = path.join(__dirname, '..', 'uploads', 'others');
+                    logger.info(`File will be saved to others folder for fileType: ${normalizedFileType}`);
+                }
+
+                // Create the directory if it doesn't exist
+                fs.mkdirSync(uploadPath, { recursive: true });
+                cb(null, uploadPath);
+            },
+            filename: (req, file, cb) => {
+                cb(null, `${Date.now()}-${file.originalname}`);
+            }
+        });
+
+        const customUpload = multer({
+            storage: customStorage,
+            fileFilter: (req, file, cb) => {
+                const allowedMimeTypes = [
+                    'image/jpeg', 'image/png', 'image/gif',
+                    'application/pdf', 'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'text/plain'
+                ];
+
+                if (allowedMimeTypes.includes(file.mimetype)) {
+                    logger.info(`File type ${file.mimetype} accepted for upload`);
+                    cb(null, true);
+                } else {
+                    logger.warn(`File type ${file.mimetype} rejected for upload`);
+                    cb(new Error(`File type ${file.mimetype} is not allowed`), false);
+                }
+            },
+            limits: {
+                fileSize: 10 * 1024 * 1024, // 10MB limit
+                files: 1
+            }
+        });
+
+        // Use the custom upload middleware
+        customUpload.single('file')(req, res, async (err) => {
+            if (err) {
+                logger.error('File upload error:', err);
+                return res.status(400).json({
+                    success: false,
+                    message: err.message,
+                    code: 'FILE_UPLOAD_ERROR'
+                });
+            }
+
+            if (!req.file) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No file uploaded',
+                    code: 'NO_FILE_UPLOADED'
+                });
+            }
+
+            logger.info('Test file upload successful', {
+                fileType,
+                path: req.file.path,
+                filename: req.file.filename
+            });
+
+            res.status(201).json({
+                success: true,
+                message: 'Test file upload successful',
+                data: {
+                    fileId: req.file.filename,
+                    originalName: req.file.originalname,
+                    path: req.file.path,
+                    size: req.file.size,
+                    fileType,
+                    description,
+                    uploadedAt: new Date()
+                }
+            });
+        });
+
+    } catch (error) {
+        logger.error('Error in test file upload:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+/**
+ * @route   POST /api/v1/patients/:id/files
+ * @desc    Upload a file/report for a specific patient
+ * @access  Private (doctors, nurses, admins)
+ * @body    Requires 'fileType' (medical_report, prescription, lab_result, xray, other) in form-data
+ * and 'description' (optional)
+ * File itself should be sent as 'file' field in form-data
+ */
+// IMPORTANT: authenticateToken runs BEFORE Multer now for security.
+router.post('/:id/files', authenticateToken, upload.single('file'), async (req, res) => {
+    try {
+        const { id } = req.params; // Patient ID
+        const { fileType, description } = req.body; // Metadata from form-data
+
+        // Diagnostic logs removed as the issue is understood.
+        // logger.info('Received req.file object (after Multer, before Auth):', req.file);
+        // logger.info('Received req.body object (after Multer, before Auth):', req.body);
+
+        // Validate patient ID
+        if (!validateObjectId(id)) {
+            // If patient ID is invalid, delete the uploaded file from temp
+            if (req.file) {
+                await fs.unlink(req.file.path).catch(err => logger.error(`Failed to delete temp file ${req.file.path}:`, err));
+            }
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid patient ID format',
+                debug: { id }
+            });
+        }
+
+        // Check if file was uploaded by multer
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'No file uploaded or Multer failed to process the file.',
+                debug: { multerError: req.fileError ? req.fileError.message : 'Unknown Multer error' }
+            });
+        }
+
+        // Find the patient
+        const patient = await Patient.findById(id);
+        if (!patient) {
+            // If patient not found, delete the uploaded file from temp
+            await fs.unlink(req.file.path).catch(err => logger.error(`Failed to delete temp file ${req.file.path}:`, err));
+            return res.status(404).json({
+                success: false,
+                message: 'Patient not found',
+                debug: { patientId: id }
+            });
+        }
+
+        // --- NEW FILE MOVING LOGIC ---
+        let targetDirectory;
+        const normalizedFileType = (fileType || 'other').toLowerCase();
+
+        switch (normalizedFileType) {
+            case 'medical_report':
+            case 'prescription':
+            case 'lab_result':
+                targetDirectory = path.join(__dirname, '..', 'uploads', 'documents');
+                break;
+            case 'xray':
+                targetDirectory = path.join(__dirname, '..', 'uploads', 'images');
+                break;
+            case 'other': // Explicitly handle 'other' as well
+                targetDirectory = path.join(__dirname, '..', 'uploads', 'others');
+                break;
+            case 'report': // If you have 'reports' as a fileType as per your README
+                 targetDirectory = path.join(__dirname, '..', 'uploads', 'reports');
+                 break;
+            default:
+                // Fallback for unrecognized fileType, though fileFilter should ideally catch this
+                targetDirectory = path.join(__dirname, '..', 'uploads', 'others');
+                logger.warn(`Unrecognized fileType '${fileType}', defaulting to 'others' directory.`);
+        }
+
+        // Create the target directory if it doesn't exist
+        await fs.mkdir(targetDirectory, { recursive: true });
+
+        const newFilePath = path.join(targetDirectory, req.file.filename);
+
+        // Move the file from its temporary location to the final categorized location
+        await fs.rename(req.file.path, newFilePath);
+        // --- END NEW FILE MOVING LOGIC ---
+
+        // Construct file metadata to save in patient document
+        const fileMetadata = {
+            filename: req.file.filename,
+            originalName: req.file.originalname,
+            mimeType: req.file.mimetype,
+            size: req.file.size,
+            path: newFilePath, // Update path to the final location
+            fileType: normalizedFileType, // Use the normalized fileType
+            uploadedBy: req.user.id, // ID of the user uploading the file
+            uploadedAt: new Date(),
+            description: description || ''
+        };
+
+        // Add file metadata to patient's files array and save
+        patient.files.push(fileMetadata);
+        await patient.save();
+
+        logger.info('File uploaded, categorized, and linked to patient', {
+            patientId: id,
+            fileId: fileMetadata.filename,
+            fileType: fileMetadata.fileType,
+            uploadedBy: req.user.id,
+            userRole: req.user.role,
+            finalPath: fileMetadata.path
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'File uploaded and linked successfully',
+            data: {
+                patientId: patient._id,
+                file: fileMetadata
+            },
+            debug: { patientId: id, fileMetadata: fileMetadata }
+        });
+
+    } catch (error) {
+        logger.error('Error uploading file in route handler:', error);
+        // If an error occurred after file upload but before final save, try to delete the temporary file
+        if (req.file && req.file.path && req.file.destination && req.file.destination.includes('uploads/temp')) { // Only delete from temp if it was there
+            await fs.unlink(req.file.path).catch(err => logger.error(`Failed to delete orphaned temp file ${req.file.path} after error:`, err));
+        } else if (req.file && req.file.path) { // If it was already moved but error after that
+            await fs.unlink(req.file.path).catch(err => logger.error(`Failed to delete orphaned final file ${req.file.path} after error:`, err));
+        }
+
+        if (error instanceof multer.MulterError) {
+            return res.status(400).json({
+                success: false,
+                message: error.message,
+                debug: { code: error.code }
+            });
+        }
+
+        if (error.name === 'ValidationError') {
+            const validationErrors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Validation error',
+                errors: validationErrors,
+                debug: { error: error.message }
+            });
+        }
+        
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            debug: { error: error.message }
+        });
+    }
 });
 
 // Apply authentication to all routes
@@ -317,70 +592,142 @@ router.get('/', requireRole(['admin', 'doctor', 'nurse']), async (req, res) => {
       }
     }
 
-    // Execute query
+    // Execute query with pagination
     const patients = await Patient.find(query)
-      .populate('createdBy', 'fullName')
-      .populate('assignedDoctor', 'fullName')
+      .populate('createdBy', 'fullName email')
+      .populate('updatedBy', 'fullName email')
+      .populate('assignedDoctor', 'fullName email')
       .sort(sort)
       .skip(skip)
       .limit(limitNumber);
 
-    const total = await Patient.countDocuments(query);
+    // Get total count for pagination info
+    const totalPatients = await Patient.countDocuments(query);
+    const totalPages = Math.ceil(totalPatients / limitNumber);
 
-    // Use role-based masking for patient summaries
-    const maskedPatients = patients.map(patient => 
-      patient.getSummaryForRole(req.user.role)
-    );
+    // Transform data based on user role
+    const transformedPatients = patients.map(patient => patient.getSummaryForRole(req.user.role));
 
-    logger.audit('patients_listed', req.user._id, 'patients', {
-      count: patients.length,
-      page: pageNumber,
-      limit: limitNumber,
-      userRole: req.user.role,
-      sort: sort,
+    // Build debug info for troubleshooting
+    const debugInfo = {
       query: req.query,
-      filterBy: req.query.filterBy,
-      filterValue: req.query.filterValue
-    });
+      appliedFilters: Object.keys(query).length > 0 ? query : 'none',
+      sort: sort,
+      pagination: {
+        page: pageNumber,
+        limit: limitNumber,
+        skip,
+        totalPatients,
+        totalPages
+      },
+      resultsCount: transformedPatients.length
+    };
 
     res.json({
       success: true,
       data: {
-        patients: maskedPatients,
+        patients: transformedPatients,
         pagination: {
-          page: pageNumber,
-          limit: limitNumber,
-          total,
-          pages: Math.ceil(total / limitNumber)
-        },
-        // Add debugging information for sorting and filtering
-        debug: {
-          sortApplied: sort,
-          sortBy: req.query.sortBy,
-          sortOrder: req.query.sortOrder,
-          legacySort: req.query.sort,
-          filterBy: req.query.filterBy,
-          filterValue: req.query.filterValue,
-          allowedFilterFields: [
-            'fullName', 'firstName', 'lastName', 'patientId', 'email', 'phoneNumber',
-            'gender', 'county', 'subCounty', 'isActive', 'checkInStatus', 'bloodType',
-            'assignedDepartment', 'nationalId', 'age', 'dateOfBirth'
-          ],
-          pagination: {
-            requestedPage: req.query.page,
-            requestedLimit: req.query.limit,
-            appliedPage: pageNumber,
-            appliedLimit: limitNumber,
-            skip: skip
-          }
+          currentPage: pageNumber,
+          totalPages,
+          totalPatients,
+          hasNextPage: pageNumber < totalPages,
+          hasPrevPage: pageNumber > 1,
+          limit: limitNumber
         }
-      }
+      },
+      debug: debugInfo
+    });
+
+    logger.audit('patients_retrieved', req.user._id, 'patients_list', {
+      count: transformedPatients.length,
+      filters: req.query,
+      pagination: { page: pageNumber, limit: limitNumber }
     });
   } catch (error) {
     logger.error('Get patients failed:', error);
     res.status(500).json({
-      error: 'Failed to get patients'
+      error: 'Failed to get patients',
+      details: error.message
     });
+  }
+});
+
+// @route   GET /api/v1/patients/export
+// @desc    Export patients data
+// @access  Private (Admin only)
+router.get('/export', requireRole(['admin']), async (req, res) => {
+  try {
+    const { format = 'csv', department, startDate, endDate } = req.query;
+    
+    if (!['csv', 'xlsx'].includes(format)) {
+      return res.status(400).json({ error: 'Invalid format. Must be "csv" or "xlsx".' });
+    }
+
+    // Build query
+    const query = {};
+    if (department) {
+      query.assignedDepartment = department;
+    }
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    const patients = await Patient.find(query)
+      .populate('createdBy', 'fullName email')
+      .populate('assignedDoctor', 'fullName email')
+      .sort({ createdAt: -1 });
+
+    // Transform data for export
+    const exportData = patients.map(patient => ({
+      patientId: patient.patientId,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      nationalId: patient.nationalId,
+      dateOfBirth: patient.dateOfBirth,
+      gender: patient.gender,
+      phoneNumber: patient.phoneNumber,
+      email: patient.email,
+      county: patient.address?.county,
+      assignedDepartment: patient.assignedDepartment,
+      checkInStatus: patient.checkInStatus,
+      createdAt: patient.createdAt,
+      createdBy: patient.createdBy?.fullName || 'N/A',
+      assignedDoctor: patient.assignedDoctor?.fullName || 'N/A'
+    }));
+
+    if (format === 'csv') {
+      // Set headers for CSV download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=patients-${new Date().toISOString().split('T')[0]}.csv`);
+      
+      // Create CSV content
+      const headers = Object.keys(exportData[0] || {}).join(',');
+      const rows = exportData.map(row => Object.values(row).map(value => 
+        typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
+      ).join(','));
+      
+      const csvContent = [headers, ...rows].join('\n');
+      res.send(csvContent);
+    } else {
+      // For xlsx, return JSON data (you can implement xlsx generation later)
+      res.json({
+        success: true,
+        data: exportData,
+        count: exportData.length
+      });
+    }
+
+    logger.audit('patients_exported', req.user._id, 'patients_export', {
+      format,
+      count: exportData.length,
+      filters: { department, startDate, endDate }
+    });
+  } catch (error) {
+    logger.error('Patient export failed:', error);
+    res.status(500).json({ error: 'Failed to export patients data' });
   }
 });
 
@@ -412,7 +759,7 @@ router.get('/:id', canAccessPatient('id'), async (req, res) => {
   const { id } = req.params;
 
   // Validation guard: Check if the provided 'id' is a valid MongoDB ObjectId format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     logger.warn(`Invalid ObjectId format received for patient retrieval: ${id}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
@@ -534,7 +881,7 @@ router.put('/:id', canAccessPatient('id'), validatePatient, async (req, res) => 
   const { id } = req.params;
 
   // Validation guard: Check if the provided 'id' is a valid MongoDB ObjectId format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     logger.warn(`Invalid ObjectId format received for patient update: ${id}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
@@ -596,7 +943,7 @@ router.patch('/:id', canAccessPatient('id'), async (req, res) => {
   const { id } = req.params;
 
   // Validation guard: Check if the provided 'id' is a valid MongoDB ObjectId format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     logger.warn(`Invalid ObjectId format received for patient partial update: ${id}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
@@ -694,8 +1041,8 @@ router.delete('/bulk', requireRole(['admin']), async (req, res) => {
     }
 
     // Filter out any values that are not valid MongoDB ObjectIds
-    const validIds = ids.filter(id => mongoose.Types.ObjectId.isValid(id));
-    const invalidIds = ids.filter(id => !mongoose.Types.ObjectId.isValid(id));
+    const validIds = ids.filter(id => validateObjectId(id));
+    const invalidIds = ids.filter(id => !validateObjectId(id));
 
     if (validIds.length === 0) {
       return res.status(400).json({ 
@@ -740,7 +1087,7 @@ router.delete('/:id', requireRole(['admin']), async (req, res) => {
   const { id } = req.params;
 
   // Validation guard: Check if the provided 'id' is a valid MongoDB ObjectId format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     logger.warn(`Invalid ObjectId format received for patient deletion: ${id}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
@@ -901,7 +1248,7 @@ router.post('/:id/vital-signs', canAccessPatient('id'), validateVitalSigns, asyn
   const { id } = req.params;
 
   // Validation guard: Check if the provided 'id' is a valid MongoDB ObjectId format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     logger.warn(`Invalid ObjectId format received for vital signs addition: ${id}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
@@ -953,7 +1300,7 @@ router.post('/:id/allergies', canAccessPatient('id'), validateAllergy, async (re
   const { id } = req.params;
 
   // Validation guard: Check if the provided 'id' is a valid MongoDB ObjectId format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     logger.warn(`Invalid ObjectId format received for allergy addition: ${id}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
@@ -1041,7 +1388,7 @@ router.get('/:id/allergies', canAccessPatient('id'), async (req, res) => {
   const { id } = req.params;
 
   // Validation guard: Check if the provided 'id' is a valid MongoDB ObjectId format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     logger.warn(`Invalid ObjectId format received for allergies retrieval: ${id}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
@@ -1072,12 +1419,12 @@ router.patch('/:id/allergies/:allergyId', canAccessPatient('id'), async (req, re
   const { reaction, severity } = req.body;
 
   // Validation guard: Check if both IDs are valid MongoDB ObjectId format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     logger.warn(`Invalid ObjectId format received for allergy update (patient): ${id}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
 
-  if (!mongoose.Types.ObjectId.isValid(allergyId)) {
+  if (!validateObjectId(allergyId)) {
     logger.warn(`Invalid ObjectId format received for allergy update (allergy): ${allergyId}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid allergy ID format.' });
   }
@@ -1127,12 +1474,12 @@ router.delete('/:id/allergies/:allergyId', canAccessPatient('id'), async (req, r
   const { id, allergyId } = req.params;
 
   // Validation guard: Check if both IDs are valid MongoDB ObjectId format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     logger.warn(`Invalid ObjectId format received for allergy deletion (patient): ${id}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
 
-  if (!mongoose.Types.ObjectId.isValid(allergyId)) {
+  if (!validateObjectId(allergyId)) {
     logger.warn(`Invalid ObjectId format received for allergy deletion (allergy): ${allergyId}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid allergy ID format.' });
   }
@@ -1180,7 +1527,7 @@ router.get('/:id/vital-signs', canAccessPatient('id'), async (req, res) => {
   const { id } = req.params;
 
   // Validation guard: Check if the provided 'id' is a valid MongoDB ObjectId format
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     logger.warn(`Invalid ObjectId format received for vital signs retrieval: ${id}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
@@ -1218,7 +1565,7 @@ router.patch('/:id/checkin', requireRole(['admin', 'doctor', 'nurse']), async (r
   // Accept both 'status' and 'checkInStatus' field names for flexibility
   const checkInStatus = req.body.checkInStatus || req.body.status;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
 
@@ -1300,7 +1647,7 @@ router.patch('/:id/assign', requireRole(['admin', 'doctor']), async (req, res) =
   const { id } = req.params;
   const { assignedDoctor, assignedDepartment } = req.body;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!validateObjectId(id)) {
     return res.status(400).json({ error: 'Invalid patient ID format.' });
   }
 
@@ -1308,7 +1655,7 @@ router.patch('/:id/assign', requireRole(['admin', 'doctor']), async (req, res) =
     return res.status(400).json({ error: 'Both assignedDoctor and assignedDepartment are required.' });
   }
 
-  if (!mongoose.Types.ObjectId.isValid(assignedDoctor)) {
+  if (!validateObjectId(assignedDoctor)) {
     return res.status(400).json({ error: 'Invalid doctor ID format.' });
   }
 
@@ -1356,84 +1703,6 @@ router.patch('/:id/assign', requireRole(['admin', 'doctor']), async (req, res) =
   } catch (error) {
     logger.error('Patient assignment failed:', error);
     res.status(500).json({ error: 'Failed to assign patient' });
-  }
-});
-
-// @route   GET /api/v1/patients/export
-// @desc    Export patients data
-// @access  Private (Admin only)
-router.get('/export', requireRole(['admin']), async (req, res) => {
-  try {
-    const { format = 'csv', department, startDate, endDate } = req.query;
-    
-    if (!['csv', 'xlsx'].includes(format)) {
-      return res.status(400).json({ error: 'Invalid format. Must be "csv" or "xlsx".' });
-    }
-
-    // Build query
-    const query = {};
-    if (department) {
-      query.assignedDepartment = department;
-    }
-    if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) query.createdAt.$gte = new Date(startDate);
-      if (endDate) query.createdAt.$lte = new Date(endDate);
-    }
-
-    const patients = await Patient.find(query)
-      .populate('createdBy', 'fullName email')
-      .populate('assignedDoctor', 'fullName email')
-      .sort({ createdAt: -1 });
-
-    // Transform data for export
-    const exportData = patients.map(patient => ({
-      patientId: patient.patientId,
-      firstName: patient.firstName,
-      lastName: patient.lastName,
-      nationalId: patient.nationalId,
-      dateOfBirth: patient.dateOfBirth,
-      gender: patient.gender,
-      phoneNumber: patient.phoneNumber,
-      email: patient.email,
-      county: patient.address?.county,
-      assignedDepartment: patient.assignedDepartment,
-      checkInStatus: patient.checkInStatus,
-      createdAt: patient.createdAt,
-      createdBy: patient.createdBy?.fullName || 'N/A',
-      assignedDoctor: patient.assignedDoctor?.fullName || 'N/A'
-    }));
-
-    if (format === 'csv') {
-      // Set headers for CSV download
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename=patients-${new Date().toISOString().split('T')[0]}.csv`);
-      
-      // Create CSV content
-      const headers = Object.keys(exportData[0] || {}).join(',');
-      const rows = exportData.map(row => Object.values(row).map(value => 
-        typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
-      ).join(','));
-      
-      const csvContent = [headers, ...rows].join('\n');
-      res.send(csvContent);
-    } else {
-      // For xlsx, return JSON data (you can implement xlsx generation later)
-      res.json({
-        success: true,
-        data: exportData,
-        count: exportData.length
-      });
-    }
-
-    logger.audit('patients_exported', req.user._id, 'patients_export', {
-      format,
-      count: exportData.length,
-      filters: { department, startDate, endDate }
-    });
-  } catch (error) {
-    logger.error('Patient export failed:', error);
-    res.status(500).json({ error: 'Failed to export patients data' });
   }
 });
 
