@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { authenticateToken, requireRole, canAccessPatient } = require('../middleware/auth');
+const { authenticate, authorize, requireRole, authenticateToken, canAccessPatient, isGovernmentVerifiedProfessional } = require('../middleware/authMiddleware');
 const Patient = require('../models/Patient');
 const logger = require('../utils/logger');
 const mongoose = require('mongoose');
@@ -146,7 +146,7 @@ router.post('/:id/files/test', async (req, res) => {
  * File itself should be sent as 'file' field in form-data
  */
 // IMPORTANT: authenticateToken runs BEFORE Multer now for security.
-router.post('/:id/files', authenticateToken, upload.single('file'), async (req, res) => {
+router.post('/:id/files', authenticate, upload.single('file'), async (req, res) => {
     try {
         const { id } = req.params; // Patient ID
         const { fileType, description } = req.body; // Metadata from form-data
@@ -295,7 +295,7 @@ router.post('/:id/files', authenticateToken, upload.single('file'), async (req, 
 });
 
 // Apply authentication to all routes
-router.use(authenticateToken);
+router.use(authenticate);
 
 // Apply rate limiting to mutation endpoints
 router.use(['/'], mutationLimiter);
@@ -307,7 +307,7 @@ const validatePatient = [
   body('dateOfBirth').isISO8601().toDate(),
   body('gender').isIn(['male', 'female', 'other', 'prefer_not_to_say']),
   body('nationalId').optional().matches(/^\d{7,8}$/),
-  body('phoneNumber').matches(/^(\+254|0)[17]\d{8}$/),
+  body('phoneNumber').matches(/^\+?254[17]\d{8}$|^0[17]\d{8}$/),
   body('email').optional().isEmail().normalizeEmail(),
   body('address.county').isIn([
     'Mombasa', 'Kwale', 'Kilifi', 'Tana River', 'Lamu', 'Taita Taveta', 'Garissa', 'Wajir', 'Mandera',
@@ -357,7 +357,7 @@ const validateAllergy = [
 // @route   GET /api/v1/patients
 // @desc    Get all patients with pagination and filtering
 // @access  Private
-router.get('/', requireRole(['admin', 'doctor', 'nurse']), async (req, res) => {
+router.get('/', authorize(['admin', 'doctor', 'nurse']), async (req, res) => {
   try {
     // --- Robust Pagination Validation ---
     const { page, limit } = req.query;
@@ -656,7 +656,7 @@ router.get('/', requireRole(['admin', 'doctor', 'nurse']), async (req, res) => {
 // @route   GET /api/v1/patients/export
 // @desc    Export patients data
 // @access  Private (Admin only)
-router.get('/export', requireRole(['admin']), async (req, res) => {
+router.get('/export', authorize(['admin']), async (req, res) => {
   try {
     const { format = 'csv', department, startDate, endDate } = req.query;
     
@@ -734,7 +734,7 @@ router.get('/export', requireRole(['admin']), async (req, res) => {
 // @route   GET /api/v1/patients/statistics/county
 // @desc    Get patient statistics by county
 // @access  Private
-router.get('/statistics/county', requireRole(['admin', 'doctor']), async (req, res) => {
+router.get('/statistics/county', authorize(['admin', 'doctor']), async (req, res) => {
   try {
     const stats = await Patient.getCountyStatistics();
 
@@ -814,7 +814,7 @@ router.get('/:id', canAccessPatient('id'), async (req, res) => {
 // @route   POST /api/v1/patients
 // @desc    Create a new patient
 // @access  Private
-router.post('/', requireRole(['admin', 'doctor', 'nurse']), validatePatient, async (req, res) => {
+router.post('/', requireRole(['admin', 'doctor', 'nurse']), isGovernmentVerifiedProfessional, validatePatient, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -1028,7 +1028,7 @@ router.patch('/:id', canAccessPatient('id'), async (req, res) => {
 // @route   DELETE /api/v1/patients/bulk
 // @desc    Bulk delete patients (soft delete)
 // @access  Private (Admin only)
-router.delete('/bulk', requireRole(['admin']), async (req, res) => {
+router.delete('/bulk', authorize(['admin']), async (req, res) => {
   try {
     const { ids } = req.body;
     
@@ -1083,7 +1083,7 @@ router.delete('/bulk', requireRole(['admin']), async (req, res) => {
 // @route   DELETE /api/v1/patients/:id
 // @desc    Delete patient (soft delete)
 // @access  Private
-router.delete('/:id', requireRole(['admin']), async (req, res) => {
+router.delete('/:id', authorize(['admin']), async (req, res) => {
   const { id } = req.params;
 
   // Validation guard: Check if the provided 'id' is a valid MongoDB ObjectId format
@@ -1559,7 +1559,7 @@ router.get('/:id/vital-signs', canAccessPatient('id'), async (req, res) => {
 // @route   PATCH /api/v1/patients/:id/checkin
 // @desc    Update patient check-in status
 // @access  Private
-router.patch('/:id/checkin', requireRole(['admin', 'doctor', 'nurse']), async (req, res) => {
+router.patch('/:id/checkin', authorize(['admin', 'doctor', 'nurse']), async (req, res) => {
   const { id } = req.params;
   
   // Accept both 'status' and 'checkInStatus' field names for flexibility
@@ -1643,7 +1643,7 @@ router.patch('/:id/checkin', requireRole(['admin', 'doctor', 'nurse']), async (r
 // @route   PATCH /api/v1/patients/:id/assign
 // @desc    Assign a doctor to a patient
 // @access  Private
-router.patch('/:id/assign', requireRole(['admin', 'doctor']), async (req, res) => {
+router.patch('/:id/assign', authorize(['admin', 'doctor']), async (req, res) => {
   const { id } = req.params;
   const { assignedDoctor, assignedDepartment } = req.body;
 

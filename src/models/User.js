@@ -48,6 +48,44 @@ const userSchema = new mongoose.Schema({
   
   licenseExpiry: Date,
   
+  // --- NEW PROFESSIONAL VERIFICATION FIELDS ---
+  isGovernmentVerified: { // High-level flag for quick checks
+    type: Boolean,
+    default: false
+  },
+  professionalVerification: { // Detailed sub-document for verification status
+    status: { // 'unsubmitted', 'pending', 'verified', 'rejected'
+      type: String,
+      enum: ['unsubmitted', 'pending', 'verified', 'rejected'],
+      default: 'unsubmitted'
+    },
+    licensingBody: { // KMPDC, NCK, etc.
+      type: String,
+      enum: ['KMPDC', 'NCK', 'PPB', 'other'], // Added PPB for completeness though it's about premises
+      default: 'other'
+    },
+    submittedLicenseNumber: { // The license number submitted by the user for verification
+      type: String,
+      trim: true,
+      sparse: true, // Allow nulls/duplicates if not submitted
+    },
+    submissionDate: Date, // When user submitted details for verification
+    verificationDate: Date, // When admin verified them
+    verifiedBy: { // Admin user who performed verification
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    rejectionReason: { // Why verification was rejected
+      type: String,
+      trim: true
+    },
+    notes: { // Internal admin notes
+      type: String,
+      trim: true
+    }
+  },
+  // --- END NEW PROFESSIONAL VERIFICATION FIELDS ---
+  
   // Contact Information
   email: {
     type: String,
@@ -252,6 +290,9 @@ userSchema.index({ department: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ createdAt: -1 });
 
+// Add index for the new licenseNumber if it's the primary professional identifier
+userSchema.index({ 'professionalVerification.submittedLicenseNumber': 1, 'professionalVerification.licensingBody': 1 }, { unique: true, sparse: true });
+
 // Password hashing middleware
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
@@ -270,7 +311,9 @@ userSchema.methods.generateAuthToken = function() {
   const payload = {
     userId: this._id,
     email: this.email,
-    role: this.role
+    role: this.role,
+    // Include isGovernmentVerified in the token payload for quick checks
+    isGovernmentVerified: this.isGovernmentVerified
   };
   
   return jwt.sign(payload, process.env.JWT_SECRET, {
@@ -324,7 +367,7 @@ userSchema.methods.hasPermission = function(resource, action) {
   return permission && permission.actions.includes(action);
 };
 
-// Instance method to get user summary
+// Instance method to get user summary (for general display)
 userSchema.methods.getSummary = function() {
   return {
     _id: this._id,
@@ -336,9 +379,26 @@ userSchema.methods.getSummary = function() {
     department: this.department,
     phone: this.phone,
     isActive: this.isActive,
-    isVerified: this.isVerified,
+    isVerified: this.isVerified, // General verification (email/phone)
+    isGovernmentVerified: this.isGovernmentVerified, // New government verification status
+    professionalVerificationStatus: this.professionalVerification ? this.professionalVerification.status : 'unsubmitted',
     lastLogin: this.lastLogin
   };
+};
+
+// Instance method to get user profile (for self-view or admin view of sensitive info)
+userSchema.methods.getProfile = function() {
+  const userObject = this.toObject({ virtuals: true });
+  delete userObject.password; // Ensure password is not returned
+  delete userObject.passwordResetToken; // Ensure reset token is not returned
+
+  // Exclude internal verification notes for non-admin view
+  if (userObject.professionalVerification && userObject.professionalVerification.notes) {
+      // If it's not being accessed by an admin, remove the sensitive 'notes'
+      // This logic will be in the route handler based on req.user.role
+      // For the getProfile method itself, we return everything, and the route trims for specific roles.
+  }
+  return userObject;
 };
 
 // Static method to find users by role
@@ -351,6 +411,10 @@ userSchema.statics.findByRole = function(role, options = {}) {
   
   if (options.department) {
     query.department = options.department;
+  }
+
+  if (options.isGovernmentVerified !== undefined) { // New filter option
+      query.isGovernmentVerified = options.isGovernmentVerified;
   }
   
   return this.find(query)
@@ -384,23 +448,51 @@ userSchema.statics.getStatistics = async function() {
           _id: null,
           totalUsers: { $sum: 1 },
           activeUsers: { $sum: { $cond: ['$isActive', 1, 0] } },
-          verifiedUsers: { $sum: { $cond: ['$isVerified', 1, 0] } },
+          // Updated to include government verified users
+          verifiedUsers: { $sum: { $cond: ['$isVerified', 1, 0] } }, // Keep for general verification
+          governmentVerifiedUsers: { $sum: { $cond: ['$isGovernmentVerified', 1, 0] } }, // New stat
           roleDistribution: {
             $push: {
               role: '$role',
               count: 1
             }
+          },
+          professionalVerificationDistribution: { // New stat for professional verification status
+              $push: {
+                  status: '$professionalVerification.status',
+                  count: 1
+              }
           }
         }
       }
     ]);
     
-    return stats[0] || { 
+    const result = stats[0] || { 
       totalUsers: 0, 
       activeUsers: 0, 
       verifiedUsers: 0, 
-      roleDistribution: [] 
+      governmentVerifiedUsers: 0,
+      roleDistribution: [],
+      professionalVerificationDistribution: []
     };
+
+    // Aggregate professional verification distribution correctly if needed
+    // The $push above captures per-document status. We might want to group them here.
+    const professionalVerificationSummary = result.professionalVerificationDistribution.reduce((acc, curr) => {
+        if (curr.status) { // Only count if status is actually set
+            acc[curr.status] = (acc[curr.status] || 0) + 1;
+        }
+        return acc;
+    }, {});
+    
+    // Convert back to array of objects if needed, or keep as object
+    result.professionalVerificationDistribution = Object.keys(professionalVerificationSummary).map(status => ({
+        status,
+        count: professionalVerificationSummary[status]
+    }));
+
+
+    return result;
   } catch (error) {
     logger.error('Failed to get user statistics:', error);
     throw error;

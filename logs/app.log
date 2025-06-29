@@ -1437,3 +1437,392 @@
 {"action":"user_authenticated","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","method":"POST","resource":"/api/v1/patients","service":"medblock-backend","timestamp":"2025-06-29 22:11:52","userAgent":"curl/8.5.0","userId":"685ee7276d5c4c3dc71afc9c"}
 {"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-29 22:11:52","userAgent":"curl/8.5.0"}
 {"action":"user_authenticated","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","method":"POST","resource":"/api/v1/patients","service":"medblock-backend","timestamp":"2025-06-29 22:11:52","userAgent":"curl/8.5.0","userId":"685ee7276d5c4c3dc71afc9c"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-29 22:59:14"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-29 23:08:18"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-29 23:08:18"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-29 23:08:18"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-29 23:08:18"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-29 23:08:18"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-29 23:08:18"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-29 23:08:19"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-29 23:08:20"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /api/v1/auth/ping-auth","service":"medblock-backend","timestamp":"2025-06-29 23:08:33","userAgent":"curl/8.5.0"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-29 23:08:39","userAgent":"curl/8.5.0"}
+{"action":"user_registered","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","professionalVerificationStatus":"pending","resource":"auth","role":"doctor","service":"medblock-backend","timestamp":"2025-06-29 23:08:40","userAgent":"curl/8.5.0","userId":"68619d47e7f9ed5414ad5071"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-29 23:08:48","userAgent":"curl/8.5.0"}
+{"action":"user_login","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","resource":"auth","service":"medblock-backend","timestamp":"2025-06-29 23:08:48","userAgent":"curl/8.5.0","userId":"68619d47e7f9ed5414ad5071"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /api/v1/auth/me","service":"medblock-backend","timestamp":"2025-06-29 23:08:54","userAgent":"curl/8.5.0"}
+{"action":"user_authenticated","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","method":"GET","resource":"/api/v1/auth/me","service":"medblock-backend","timestamp":"2025-06-29 23:08:54","userAgent":"curl/8.5.0","userId":"68619d47e7f9ed5414ad5071"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-29 23:09:01","userAgent":"curl/8.5.0"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-29 23:09:07","userAgent":"curl/8.5.0"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-29 23:09:13","userAgent":"curl/8.5.0"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-29 23:09:26","userAgent":"curl/8.5.0"}
+{"environment":"development","event":"auth_rate_limit_exceeded","ip":"::1","level":"warn","message":"SECURITY_EVENT","path":"/api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-29 23:09:26","userAgent":"curl/8.5.0","userId":"N/A"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-29 23:11:19"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-29 23:13:52"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-29 23:13:53"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-29 23:13:53"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-29 23:13:53"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-29 23:13:53"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-29 23:13:53"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /api/v1/auth/ping-auth","service":"medblock-backend","timestamp":"2025-06-29 23:13:56","userAgent":"curl/8.5.0"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-29 23:14:02","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-29 23:19:28"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-29 23:19:29"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-29 23:19:46"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-29 23:19:57"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-29 23:19:57"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-29 23:19:57"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-29 23:19:57"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-29 23:19:57"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-29 23:19:57"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-29 23:20:18","userAgent":"curl/8.5.0"}
+{"action":"user_registered","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","professionalVerificationStatus":"pending","resource":"auth","role":"doctor","service":"medblock-backend","timestamp":"2025-06-29 23:20:18","userAgent":"curl/8.5.0","userId":"6861a002ad3f2ab68a8b6125"}
+{"environment":"development","ip":"::1","level":"info","message":"PATCH /api/v1/admin/users/6861a002ad3f2ab68a8b6125/verify-professional","service":"medblock-backend","timestamp":"2025-06-29 23:21:23","userAgent":"curl/8.5.0"}
+{"action":"Set professional verification status to verified","adminUser":"685ee7276d5c4c3dc71afc9c","environment":"development","level":"info","message":"AUDIT_LOG","newStatus":"verified","resource":"user:6861a002ad3f2ab68a8b6125","service":"medblock-backend","timestamp":"2025-06-29 23:21:23","userId":"6861a002ad3f2ab68a8b6125"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-29 23:34:25"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-29 23:59:21"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-29 23:59:21"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-29 23:59:21"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-29 23:59:21"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-29 23:59:21"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-29 23:59:21"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-29 23:59:26","userAgent":"curl/8.5.0"}
+{"action":"user_registered","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","professionalVerificationStatus":"pending","resource":"auth","role":"doctor","service":"medblock-backend","timestamp":"2025-06-29 23:59:26","userAgent":"curl/8.5.0","userId":"6861a92e798916a5ad2a2153"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 00:00:55","userAgent":"curl/8.5.0"}
+{"action":"user_authenticated","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","method":"POST","resource":"/api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 00:00:55","userAgent":"curl/8.5.0","userId":"6861a92e798916a5ad2a2153"}
+{"action":"patient_created","environment":"development","level":"info","message":"AUDIT_LOG","patientId":"GHHsJX3LR","patientName":"Blocked Patient","resource":"patient:GHHsJX3LR","service":"medblock-backend","timestamp":"2025-06-30 00:00:55","userId":"6861a92e798916a5ad2a2153"}
+{"environment":"development","level":"warn","message":"BMI virtual accessed with unpopulated or invalid vitalSigns array. Returning null.","service":"medblock-backend","timestamp":"2025-06-30 00:00:55"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 00:03:34"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:03:58"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:03:58"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:03:58"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:03:58"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:03:58"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:03:58"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 00:04:01","userAgent":"curl/8.5.0"}
+{"action":"user_authenticated","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","method":"POST","resource":"/api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 00:04:01","userAgent":"curl/8.5.0","userId":"6861a92e798916a5ad2a2153"}
+{"environment":"development","level":"info","message":"SIGTERM received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 00:13:16"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:13:23"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:13:23"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:13:23"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:13:23"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:13:23"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:13:23"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 00:14:09"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:15:00"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:15:00"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:15:00"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:15:00"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:15:00"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:15:00"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 00:15:04","userAgent":"curl/8.5.0"}
+{"action":"user_authenticated","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","method":"POST","resource":"/api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 00:15:04","userAgent":"curl/8.5.0","userId":"6861a92e798916a5ad2a2153"}
+{"action":"patient_created","environment":"development","level":"info","message":"AUDIT_LOG","patientId":"L-4NRq3Zz","patientName":"Blocked Patient","resource":"patient:L-4NRq3Zz","service":"medblock-backend","timestamp":"2025-06-30 00:15:04","userId":"6861a92e798916a5ad2a2153"}
+{"environment":"development","level":"warn","message":"BMI virtual accessed with unpopulated or invalid vitalSigns array. Returning null.","service":"medblock-backend","timestamp":"2025-06-30 00:15:04"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 00:17:12"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:17:27"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:17:27"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:17:27"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:17:27"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:17:27"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:17:27"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /health","service":"medblock-backend","timestamp":"2025-06-30 00:17:37","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"info","message":"SIGTERM received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 00:18:12"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:22:21"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:22:22"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:22:22"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:22:22"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:22:22"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:22:22"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /health","service":"medblock-backend","timestamp":"2025-06-30 00:22:30","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 00:22:46"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:22:51"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:22:51"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:22:51"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:22:51"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:22:51"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:22:51"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:23:18"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:23:18"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:23:18"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:23:18"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:23:18"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:23:18"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 00:23:21"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:24:09"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:24:10"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:24:10"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:24:10"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:24:10"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:24:10"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 00:24:16","userAgent":"curl/8.5.0"}
+{"environment":"development","error":"Cannot do exclusion on field password in inclusion projection","level":"error","message":"SECURITY_EVENT: Token verification failed.","name":"MongoServerError","service":"medblock-backend","timestamp":"2025-06-30 00:24:16","tokenProvided":true}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-30 00:25:33","userAgent":"curl/8.5.0"}
+{"action":"user_login","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","resource":"auth","service":"medblock-backend","timestamp":"2025-06-30 00:25:33","userAgent":"curl/8.5.0","userId":"6861a92e798916a5ad2a2153"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 00:26:08","userAgent":"curl/8.5.0"}
+{"environment":"development","error":"Cannot do exclusion on field password in inclusion projection","level":"error","message":"SECURITY_EVENT: Token verification failed.","name":"MongoServerError","service":"medblock-backend","timestamp":"2025-06-30 00:26:08","tokenProvided":true}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 00:35:52"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:49:40"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:49:40"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:49:40"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:49:40"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:49:40"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:49:40"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /health","service":"medblock-backend","timestamp":"2025-06-30 00:49:50","userAgent":"curl/8.5.0"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /api/v1/auth/test-token","service":"medblock-backend","timestamp":"2025-06-30 00:49:59","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:54:39"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:54:39"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:54:39"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:54:39"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:54:39"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:54:39"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:54:39"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:54:39"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:54:46"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:54:46"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /health","service":"medblock-backend","timestamp":"2025-06-30 00:54:55","userAgent":"curl/8.5.0"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-30 00:55:00","userAgent":"curl/8.5.0"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-30 00:55:04","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"error","message":"Authentication failed: Invalid email or password","service":"medblock-backend","stack":"Error: Invalid email or password\n    at userSchema.statics.authenticate (/home/josva/Desktop/MedBlock/src/models/User.js:508:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async /home/josva/Desktop/MedBlock/src/routes/auth.js:243:18","timestamp":"2025-06-30 00:55:04"}
+{"environment":"development","level":"error","message":"Login failed: Invalid email or password","service":"medblock-backend","stack":"Error: Invalid email or password\n    at userSchema.statics.authenticate (/home/josva/Desktop/MedBlock/src/models/User.js:508:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async /home/josva/Desktop/MedBlock/src/routes/auth.js:243:18","timestamp":"2025-06-30 00:55:04"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-30 00:55:10","userAgent":"curl/8.5.0"}
+{"_message":"User validation failed","environment":"development","errors":{"address.city":{"kind":"required","message":"Path `address.city` is required.","name":"ValidatorError","path":"address.city","properties":{"message":"Path `address.city` is required.","path":"address.city","type":"required"}},"address.county":{"kind":"required","message":"Path `address.county` is required.","name":"ValidatorError","path":"address.county","properties":{"message":"Path `address.county` is required.","path":"address.county","type":"required"}},"address.street":{"kind":"required","message":"Path `address.street` is required.","name":"ValidatorError","path":"address.street","properties":{"message":"Path `address.street` is required.","path":"address.street","type":"required"}},"address.subCounty":{"kind":"required","message":"Path `address.subCounty` is required.","name":"ValidatorError","path":"address.subCounty","properties":{"message":"Path `address.subCounty` is required.","path":"address.subCounty","type":"required"}}},"level":"error","message":"Registration failed: User validation failed: address.subCounty: Path `address.subCounty` is required., address.county: Path `address.county` is required., address.city: Path `address.city` is required., address.street: Path `address.street` is required.","service":"medblock-backend","stack":"ValidationError: User validation failed: address.subCounty: Path `address.subCounty` is required., address.county: Path `address.county` is required., address.city: Path `address.city` is required., address.street: Path `address.street` is required.\n    at Document.invalidate (/home/josva/Desktop/MedBlock/node_modules/mongoose/lib/document.js:3352:32)\n    at /home/josva/Desktop/MedBlock/node_modules/mongoose/lib/document.js:3113:17\n    at /home/josva/Desktop/MedBlock/node_modules/mongoose/lib/schemaType.js:1407:9\n    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)","timestamp":"2025-06-30 00:55:10"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-30 00:55:15","userAgent":"curl/8.5.0"}
+{"action":"user_registered","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","professionalVerificationStatus":"pending","resource":"auth","role":"doctor","service":"medblock-backend","timestamp":"2025-06-30 00:55:15","userAgent":"curl/8.5.0","userId":"6861b64307554b6fba859b46"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /api/v1/auth/test-token","service":"medblock-backend","timestamp":"2025-06-30 00:55:23","userAgent":"curl/8.5.0"}
+{"environment":"development","error":"Cannot do exclusion on field password in inclusion projection","level":"error","message":"SECURITY_EVENT: Token verification failed.","name":"MongoServerError","service":"medblock-backend","timestamp":"2025-06-30 00:55:23","tokenProvided":true}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-30 00:55:28","userAgent":"curl/8.5.0"}
+{"action":"user_login","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","resource":"auth","service":"medblock-backend","timestamp":"2025-06-30 00:55:28","userAgent":"curl/8.5.0","userId":"6861b64307554b6fba859b46"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /api/v1/auth/test-token","service":"medblock-backend","timestamp":"2025-06-30 00:55:35","userAgent":"curl/8.5.0"}
+{"environment":"development","error":"Cannot do exclusion on field password in inclusion projection","level":"error","message":"SECURITY_EVENT: Token verification failed.","name":"MongoServerError","service":"medblock-backend","timestamp":"2025-06-30 00:55:35","tokenProvided":true}
+{"environment":"development","level":"info","message":"SIGTERM received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 00:55:56"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:56:02"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:56:02"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:56:02"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:56:02"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:56:02"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:56:02"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /health","service":"medblock-backend","timestamp":"2025-06-30 00:56:11","userAgent":"curl/8.5.0"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-30 00:56:16","userAgent":"curl/8.5.0"}
+{"action":"user_login","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","resource":"auth","service":"medblock-backend","timestamp":"2025-06-30 00:56:16","userAgent":"curl/8.5.0","userId":"6861b64307554b6fba859b46"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /api/v1/auth/test-token","service":"medblock-backend","timestamp":"2025-06-30 00:56:25","userAgent":"curl/8.5.0"}
+{"environment":"development","error":"Cannot do exclusion on field password in inclusion projection","level":"error","message":"SECURITY_EVENT: Token verification failed.","name":"MongoServerError","service":"medblock-backend","timestamp":"2025-06-30 00:56:25","tokenProvided":true}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:56:42"}
+{"environment":"development","level":"info","message":"SIGTERM received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 00:56:44"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 00:56:51"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:56:51"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 00:56:51"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 00:56:51"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 00:56:51"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 00:56:51"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-30 00:57:01","userAgent":"curl/8.5.0"}
+{"action":"user_login","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","resource":"auth","service":"medblock-backend","timestamp":"2025-06-30 00:57:02","userAgent":"curl/8.5.0","userId":"6861b64307554b6fba859b46"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /api/v1/auth/test-token","service":"medblock-backend","timestamp":"2025-06-30 00:57:09","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"info","message":"TEST_TOKEN_ENDPOINT_HIT","role":"doctor","service":"medblock-backend","timestamp":"2025-06-30 00:57:09","userId":"6861b64307554b6fba859b46"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 00:57:22","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"warn","message":"SECURITY_EVENT: Unauthorized access attempt.","path":"/api/v1/patients","requiredRoles":[["admin","doctor","nurse"]],"service":"medblock-backend","timestamp":"2025-06-30 00:57:22","userId":"6861b64307554b6fba859b46","userRole":"doctor"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:05:04"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:05:04"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:05:04"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:05:04"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:05:04"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:05:04"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:05:04"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:05:04"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:05:05"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:05:05"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:05:04"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:05:05"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:05:04"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:05:05"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:05:04"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:05:05"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:05:11"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:05:11"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:05:25"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:05:25"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 01:05:26","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"warn","message":"SECURITY_EVENT: Unauthorized access attempt.","path":"/api/v1/patients","requiredRoles":[["admin","doctor","nurse"]],"service":"medblock-backend","timestamp":"2025-06-30 01:05:26","userId":"6861b64307554b6fba859b46","userRole":"doctor"}
+{"environment":"development","ip":"::1","level":"info","message":"GET /api/v1/auth/test-token","service":"medblock-backend","timestamp":"2025-06-30 01:05:37","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"info","message":"TEST_TOKEN_ENDPOINT_HIT","role":"doctor","service":"medblock-backend","timestamp":"2025-06-30 01:05:37","userId":"6861b64307554b6fba859b46"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-30 01:05:41","userAgent":"curl/8.5.0"}
+{"action":"user_login","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","resource":"auth","service":"medblock-backend","timestamp":"2025-06-30 01:05:41","userAgent":"curl/8.5.0","userId":"6861b64307554b6fba859b46"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 01:05:50","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"warn","message":"SECURITY_EVENT: Unauthorized access attempt.","path":"/api/v1/patients","requiredRoles":[["admin","doctor","nurse"]],"service":"medblock-backend","timestamp":"2025-06-30 01:05:50","userId":"6861b64307554b6fba859b46","userRole":"doctor"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:06:15"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:06:15"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:06:15"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:06:15"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:06:15"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:06:15"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:06:15"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:06:16"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:06:15"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:06:16"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:06:15"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:06:16"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:06:15"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:06:16"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:06:15"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:06:16"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:06:16"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:06:16"}
+{"environment":"development","level":"info","message":"SIGTERM received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 01:06:18"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:06:25"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:06:25"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:06:25"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:06:25"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:06:25"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:06:25"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 01:06:42","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"warn","message":"SECURITY_EVENT: Unauthorized access attempt.","path":"/api/v1/patients","requiredRoles":[["admin","doctor","nurse"]],"service":"medblock-backend","timestamp":"2025-06-30 01:06:42","userId":"6861b64307554b6fba859b46","userRole":"doctor"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-30 01:07:17","userAgent":"curl/8.5.0"}
+{"action":"user_login","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","resource":"auth","service":"medblock-backend","timestamp":"2025-06-30 01:07:17","userAgent":"curl/8.5.0","userId":"6861b64307554b6fba859b46"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 01:07:25","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"warn","message":"SECURITY_EVENT: Unauthorized access attempt.","path":"/api/v1/patients","requiredRoles":[["admin","doctor","nurse"]],"service":"medblock-backend","timestamp":"2025-06-30 01:07:25","userId":"6861b64307554b6fba859b46","userRole":"doctor"}
+{"environment":"development","level":"info","message":"SIGTERM received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 01:07:45"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:07:51"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:07:52"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:07:52"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:07:52"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:07:52"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:07:52"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 01:10:11"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:11:06"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:11:06"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:11:06"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:11:06"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:11:06"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:11:06"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"medblock-backend","timestamp":"2025-06-30 01:11:20","userAgent":"curl/8.5.0"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-30 01:11:34","userAgent":"curl/8.5.0"}
+{"action":"user_login","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","resource":"auth","service":"medblock-backend","timestamp":"2025-06-30 01:11:34","userAgent":"curl/8.5.0","userId":"6861a92e798916a5ad2a2153"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 01:13:16","userAgent":"curl/8.5.0"}
+{"environment":"development","error":"jwt malformed","level":"error","message":"SECURITY_EVENT: Token verification failed.","name":"JsonWebTokenError","service":"medblock-backend","timestamp":"2025-06-30 01:13:16","tokenProvided":true}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 01:13:41"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:13:50"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:13:50"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:13:50"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:13:50"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:13:50"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:13:50"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:14:31"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:14:32"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:18:33"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:18:33"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:18:33"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:18:32"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:18:33"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:18:33"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:18:50"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:18:50"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:19:26"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:19:26"}
+{"environment":"development","level":"info","message":"SIGTERM received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 01:20:56"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:22:41"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:22:42"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:22:42"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:22:42"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:22:42"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:22:42"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-30 01:23:15","userAgent":"curl/8.5.0"}
+{"action":"user_login","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","resource":"auth","service":"medblock-backend","timestamp":"2025-06-30 01:23:15","userAgent":"curl/8.5.0","userId":"6861a92e798916a5ad2a2153"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 01:24:33","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"warn","message":"SECURITY_EVENT: Unauthorized access attempt.","path":"/api/v1/patients","requiredRoles":[["admin","doctor","nurse"]],"service":"medblock-backend","timestamp":"2025-06-30 01:24:33","userId":"6861a92e798916a5ad2a2153","userRole":"doctor"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:27:42"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:27:43"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:27:42"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:27:43"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:27:42"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:27:43"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:27:43"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:27:43"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:27:42"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:27:43"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:27:43"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:27:43"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:27:43"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:27:43"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:28:02"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:28:02"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:28:02"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:28:03"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:28:02"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:28:03"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:28:02"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:28:03"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:28:02"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:28:03"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:28:02"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:28:03"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:28:02"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:28:03"}
+{"environment":"development","level":"info","message":"SIGTERM received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 01:29:23"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:29:31"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:29:31"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:29:31"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:29:31"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:29:31"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:29:31"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 01:34:31"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:34:34"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:34:34"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:34:34"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:34:34"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:34:34"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:34:34"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 01:34:38"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:35:13"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:35:14"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:35:14"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:35:14"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:35:14"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:35:14"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-30 01:35:17","userAgent":"curl/8.5.0"}
+{"action":"user_login","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","resource":"auth","service":"medblock-backend","timestamp":"2025-06-30 01:35:17","userAgent":"curl/8.5.0","userId":"6861a92e798916a5ad2a2153"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 01:36:05","userAgent":"curl/8.5.0"}
+{"environment":"development","isGovernmentVerified":false,"level":"warn","message":"SECURITY_EVENT: Non-verified professional attempted restricted action.","path":"/api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 01:36:05","userId":"6861a92e798916a5ad2a2153","userRole":"doctor"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"medblock-backend","timestamp":"2025-06-30 01:37:42","userAgent":"curl/8.5.0"}
+{"action":"user_login","environment":"development","ip":"::1","level":"info","message":"AUDIT_LOG","resource":"auth","service":"medblock-backend","timestamp":"2025-06-30 01:37:42","userAgent":"curl/8.5.0","userId":"6861a002ad3f2ab68a8b6125"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 01:38:21","userAgent":"curl/8.5.0"}
+{"environment":"development","level":"info","message":"SIGTERM received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 01:44:21"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:44:30"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:44:31"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:44:31"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:44:31"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:44:31"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:44:31"}
+{"environment":"development","level":"info","message":"SIGINT received, shutting down gracefully","service":"medblock-backend","timestamp":"2025-06-30 01:45:10"}
+{"environment":"development","level":"info","message":"--- Logger test from server.js ---","service":"medblock-backend","timestamp":"2025-06-30 01:45:32"}
+{"environment":"development","level":"info","message":"✅ MongoDB connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:45:33"}
+{"environment":"development","level":"info","message":"Database connected successfully","service":"medblock-backend","timestamp":"2025-06-30 01:45:33"}
+{"environment":"development","level":"info","message":"Server running on port 3000 in development mode","service":"medblock-backend","timestamp":"2025-06-30 01:45:33"}
+{"environment":"development","level":"info","message":"Health check available at http://localhost:3000/health","service":"medblock-backend","timestamp":"2025-06-30 01:45:33"}
+{"environment":"development","level":"info","message":"API documentation available at http://localhost:3000/api/v1","service":"medblock-backend","timestamp":"2025-06-30 01:45:33"}
+{"environment":"development","ip":"::1","level":"info","message":"POST /api/v1/patients","service":"medblock-backend","timestamp":"2025-06-30 01:46:06","userAgent":"curl/8.5.0"}
+{"action":"patient_created","environment":"development","level":"info","message":"AUDIT_LOG","patientId":"RP_hgiHTS","patientName":"Allowed Patient","resource":"patient:RP_hgiHTS","service":"medblock-backend","timestamp":"2025-06-30 01:46:06","userId":"6861a002ad3f2ab68a8b6125"}
+{"environment":"development","level":"warn","message":"BMI virtual accessed with unpopulated or invalid vitalSigns array. Returning null.","service":"medblock-backend","timestamp":"2025-06-30 01:46:06"}

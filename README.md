@@ -136,6 +136,49 @@ MAX_FILE_SIZE=10485760  # 10MB in bytes
 ALLOWED_FILE_TYPES=image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document
 ```
 
+### Authentication & Authorization Middleware
+
+The system uses a comprehensive middleware stack for authentication and authorization:
+
+#### Middleware Order
+For protected routes, the middleware should be applied in this specific order:
+1. `authenticate` - JWT token verification
+2. `requireRole` - Role-based authorization
+3. `isGovernmentVerifiedProfessional` - Professional verification check (for sensitive operations)
+4. `canAccessPatient` - Patient-specific access control (if applicable)
+5. Route validation and handler
+
+#### Middleware Functions
+
+**`authenticate`** - JWT token verification
+- Verifies Bearer token in Authorization header
+- Populates `req.user` with user data
+- Handles token expiration and validation errors
+
+**`requireRole(allowedRoles)`** - Role-based authorization
+- Takes an array of allowed roles: `['admin', 'doctor', 'nurse']`
+- Includes comprehensive debug logging for troubleshooting
+- Validates that `req.user` is populated before checking roles
+- Returns 403 Forbidden for unauthorized roles
+
+**`isGovernmentVerifiedProfessional`** - Professional verification
+- Ensures doctors and nurses are government-verified
+- Checks `req.user.isGovernmentVerified` status
+- Includes debug logging for verification status
+- Bypasses check for admin and other roles
+
+**`canAccessPatient(patientIdParam)`** - Patient access control
+- Validates patient ID format and existence
+- Role-based access: admins/doctors (all), nurses (department), front-desk (created)
+- Returns appropriate error codes for different failure scenarios
+
+#### Debug Logging
+All middleware includes comprehensive debug logging to help troubleshoot authorization issues:
+- User role and verification status
+- Required roles and permission checks
+- Request paths and authorization results
+- Detailed error messages for failed checks
+
 ### File Upload Configuration
 The system supports secure file uploads with the following configuration:
 
@@ -245,6 +288,38 @@ curl -X POST http://localhost:3000/api/v1/patients \
 - `GET /api/v1/users/role/:role` - Get users by role
 - `GET /api/v1/users/facility/:facilityId` - Get users by facility
 
+### Professional Verification Endpoints
+
+- `PATCH /api/v1/admin/users/:id/verify-professional` - Update user's professional verification status (Admin only)
+- `GET /api/v1/auth/me` - Get current user profile with verification status
+- `PUT /api/v1/auth/me` - Update user profile including professional verification details
+
+### Professional Verification Workflow
+
+The system implements a comprehensive professional verification system for healthcare professionals:
+
+#### Registration Process
+- **Doctors/Nurses with License**: Status automatically set to `'pending'` for admin review
+- **Doctors/Nurses without License**: Status set to `'unsubmitted'`
+- **Other Roles**: Default to `'unsubmitted'`
+
+#### Verification Statuses
+- **`unsubmitted`**: User has not submitted license information
+- **`pending`**: License submitted, awaiting admin verification
+- **`verified`**: Admin has verified the professional credentials
+- **`rejected`**: Admin has rejected the verification with reason
+
+#### Admin Verification Process
+- Admins can verify, reject, or update professional verification status
+- Required rejection reason when status is set to `'rejected'`
+- Automatic audit logging of all verification actions
+- Prevention of duplicate license numbers across users
+
+#### Security Enforcement
+- **`isGovernmentVerifiedProfessional` Middleware**: Enforces verification requirements for sensitive operations
+- **JWT Integration**: Includes verification status in authentication tokens
+- **Role-Based Access**: Different verification requirements based on user roles
+
 ## 🔐 Security Features
 
 ### Authentication & Authorization
@@ -253,6 +328,7 @@ curl -X POST http://localhost:3000/api/v1/patients \
 - **Password Hashing**: All user passwords are hashed with bcrypt before storage
 - **Centralized Authentication & Authorization Middleware**: Robust JWT verification and RBAC enforcement
 - **Audit Logging**: All sensitive actions are logged with user ID, action, and resource
+- **Professional Verification Enforcement**: Government-verified professional middleware for sensitive operations
 
 ### Data Privacy & Protection
 - **PII Masking**: Role-based masking of sensitive data (phone numbers, emails, national IDs)
@@ -287,6 +363,18 @@ curl -X POST http://localhost:3000/api/v1/patients \
 - **Email Addresses**: `john.doe@example.com` → `j***@example.com`
 - **National IDs**: `12345678` → `123***78`
 - **Addresses**: Street and ward information redacted for non-admin users
+
+### Phone Number Validation
+The system supports robust Kenyan phone number validation:
+- **Format Support**: Both `+254` and `0` prefixes
+- **Network Codes**: Supports Safaricom (7) and Airtel (1) numbers
+- **Regex Pattern**: `/^\+?254[17]\d{8}$|^0[17]\d{8}$/`
+- **Valid Examples**: 
+  - `+254712345678` (Safaricom with +254)
+  - `254712345678` (Safaricom without +)
+  - `0712345678` (Safaricom with 0)
+  - `+254123456789` (Airtel with +254)
+  - `0123456789` (Airtel with 0)
 
 ## 🛡️ Error Handling
 
@@ -347,6 +435,10 @@ API responses include debugging data for troubleshooting:
 - ✅ **Rate Limiting**: Production-ready rate limiting with 50 requests per 15-minute window
 - ✅ **Cross-Cutting Concerns**: Comprehensive testing of rate limiting and mass operation prevention
 - ✅ **File Upload Security**: Enhanced file upload system with proper validation and storage
+- ✅ **Professional Verification System**: Comprehensive verification workflow for healthcare professionals
+- ✅ **Government Verification Middleware**: Enforces verification requirements for sensitive operations
+- ✅ **Admin Verification Endpoints**: Complete admin interface for managing professional verification
+- ✅ **Enhanced User Model**: Detailed professional verification sub-document with audit trails
 
 ## 🤝 Contributing
 

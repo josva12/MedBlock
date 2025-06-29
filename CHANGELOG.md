@@ -1,5 +1,245 @@
 # MedBlock Changelog
 
+## [2.1.1] - 2024-12-19
+
+### 🔧 Critical Bug Fix
+
+#### Authentication Middleware Fix
+- **Fixed nested array issue** in `requireRole` middleware that was causing authorization failures
+- **Replaced alias implementation** with proper `requireRole` function that handles arrays correctly
+- **Added comprehensive debug logging** to troubleshoot authorization issues
+- **Enhanced error handling** for malformed role parameters
+- **Improved middleware validation** to ensure proper user context before role checks
+
+#### Phone Number Validation Fix
+- **Updated phone number regex** to be more robust and handle edge cases
+- **Fixed validation issue** that was rejecting valid Kenyan phone numbers
+- **Enhanced regex pattern** to support both `+254` and `0` prefixes correctly
+- **Added comprehensive documentation** for phone number validation rules
+- **Improved error messages** for phone number validation failures
+
+#### Technical Details
+- **Root cause**: `requireRole` was aliased to `authorize` which used rest parameters causing nested arrays
+- **Solution**: Implemented dedicated `requireRole(allowedRoles)` function with proper array handling
+- **Phone regex fix**: Changed from `/^(\+254|0)[17]\d{8}$/` to `/^\+?254[17]\d{8}$|^0[17]\d{8}$/`
+- **Debug logging**: Added detailed console logs showing user role, allowed roles, and permission checks
+- **Error prevention**: Added validation to ensure `allowedRoles` is always an array
+- **User context validation**: Enhanced checks to ensure `req.user` is populated before role verification
+
+#### Files Modified
+- **`src/middleware/authMiddleware.js`**: Replaced `requireRole` alias with proper implementation
+- **`src/routes/patients.js`**: Updated phone number validation regex
+- **`README.md`**: Added comprehensive middleware documentation and phone number validation guide
+- **`CHANGELOG.md`**: Documented the critical bug fixes
+
+### 🛡️ Security Improvements
+- **Enhanced authorization reliability**: Fixed critical bug that could allow unauthorized access
+- **Improved error messages**: Better error responses for authorization failures
+- **Audit logging**: Enhanced logging of authorization attempts and failures
+- **Debug capabilities**: Added comprehensive debugging support for authorization issues
+
+### 📱 Data Validation Improvements
+- **Robust phone number validation**: Fixed validation to accept all valid Kenyan phone number formats
+- **Better user experience**: Reduced validation errors for legitimate phone numbers
+- **Comprehensive documentation**: Clear examples of valid phone number formats
+- **Future-proof validation**: Support for current and future Kenyan mobile number formats
+
+## [2.1.0] - 2024-12-19
+
+### 🆕 Major Features Added
+
+#### Professional Verification System
+- **Comprehensive verification workflow** for healthcare professionals
+- **Government verification enforcement** for sensitive medical operations
+- **Admin verification interface** for managing professional credentials
+- **Enhanced User model** with detailed professional verification sub-document
+- **Audit trails** for all verification actions and status changes
+- **Duplicate license prevention** across all users
+
+#### Professional Verification Workflow
+- **Registration process**: Automatic status assignment based on role and license information
+- **Verification statuses**: `unsubmitted`, `pending`, `verified`, `rejected`
+- **Admin verification**: Complete admin interface for verification management
+- **Rejection handling**: Required rejection reasons with detailed feedback
+- **Status tracking**: Complete audit trail of verification history
+
+#### Security Enforcement
+- **`isGovernmentVerifiedProfessional` middleware**: Enforces verification requirements
+- **JWT integration**: Includes verification status in authentication tokens
+- **Role-based enforcement**: Different verification requirements by user role
+- **Real-time verification**: Database-level verification status checking
+
+### 🔧 Technical Improvements
+
+#### Authentication & Authorization
+- **Enhanced JWT payload**: Includes professional verification status
+- **Real-time verification**: Database queries for up-to-date verification status
+- **Middleware chain**: Proper middleware ordering for verification enforcement
+- **Audit logging**: Comprehensive logging of verification-related actions
+
+#### User Management
+- **Professional verification sub-document**: Detailed verification information
+- **Status management**: Complete lifecycle management of verification status
+- **Admin endpoints**: Dedicated admin interface for verification management
+- **Validation**: Comprehensive validation of professional credentials
+
+#### API Enhancements
+- **New admin endpoint**: `PATCH /api/v1/admin/users/:id/verify-professional`
+- **Enhanced user profile**: Includes verification status and history
+- **Professional verification fields**: License number, licensing body, verification dates
+- **Rejection handling**: Detailed rejection reasons and notes
+
+### 📁 Files Modified
+
+#### `src/models/User.js`
+- Added comprehensive `professionalVerification` sub-document schema
+- Enhanced JWT payload with verification status
+- Added verification status methods and utilities
+- Implemented duplicate license number prevention
+- Added audit trail fields for verification history
+
+#### `src/routes/auth.js`
+- Enhanced registration with professional verification handling
+- Added conditional verification setup based on user role
+- Implemented duplicate license number validation
+- Enhanced profile update with verification fields
+- Added comprehensive error handling for verification process
+
+#### `src/routes/adminRoutes.js`
+- Added `PATCH /api/v1/admin/users/:id/verify-professional` endpoint
+- Implemented comprehensive verification status management
+- Added validation for verification status transitions
+- Enhanced audit logging for verification actions
+- Added rejection reason handling
+
+#### `src/middleware/authMiddleware.js`
+- Added `isGovernmentVerifiedProfessional` middleware
+- Enhanced authentication with real-time verification status
+- Improved JWT payload with verification information
+- Added comprehensive error handling for verification enforcement
+- Enhanced audit logging for verification-related actions
+
+#### `README.md`
+- Added Professional Verification section with workflow documentation
+- Updated API endpoints documentation
+- Enhanced Security Features section with verification enforcement
+- Added comprehensive verification workflow guide
+- Updated Recent Updates section with new features
+
+### 🛡️ Security Features
+
+#### Professional Verification Enforcement
+- **Government verification requirement**: Sensitive operations require verified professionals
+- **Role-based enforcement**: Different verification requirements by user role
+- **Real-time verification**: Database-level verification status checking
+- **Audit trails**: Complete logging of verification-related actions
+
+#### Verification Workflow Security
+- **Duplicate prevention**: License numbers must be unique across users
+- **Admin-only verification**: Only admins can change verification status
+- **Validation**: Comprehensive validation of professional credentials
+- **Status transitions**: Controlled status change workflow
+
+### 📊 Data Management
+
+#### Professional Verification Data
+- **Verification status**: Current verification status with history
+- **License information**: License number, licensing body, submission date
+- **Verification details**: Verifier, verification date, rejection reasons
+- **Audit trails**: Complete history of verification actions
+
+#### User Profile Enhancement
+- **Verification status**: Real-time verification status in user profile
+- **Professional details**: License information and verification history
+- **Admin interface**: Complete admin view of verification information
+- **Status tracking**: Complete lifecycle of verification process
+
+### 🔍 Debug Features
+
+#### Verification Debug Information
+```json
+{
+  "professionalVerification": {
+    "status": "verified",
+    "licenseNumber": "MD12345",
+    "licensingBody": "Medical Council of Kenya",
+    "submittedAt": "2024-12-19T10:00:00.000Z",
+    "verifiedAt": "2024-12-19T11:00:00.000Z",
+    "verifiedBy": "admin@medblock.com"
+  }
+}
+```
+
+#### Audit Logging
+- All verification status changes logged
+- Admin verification actions tracked
+- Rejection reasons and notes recorded
+- User verification attempts monitored
+
+### 📚 Documentation
+
+#### Professional Verification Guide
+- **Complete workflow documentation**: Step-by-step verification process
+- **Admin interface guide**: How to manage professional verification
+- **Security enforcement**: How verification requirements are enforced
+- **API documentation**: Complete endpoint documentation
+
+#### Updated README
+- Professional verification section added
+- Enhanced security features documentation
+- Updated API endpoints with verification features
+- Comprehensive workflow documentation
+
+### 🚀 Performance Improvements
+
+#### Verification System Performance
+- **Efficient queries**: Optimized verification status queries
+- **Indexed fields**: Proper indexing for verification-related fields
+- **Caching ready**: Structure supports future verification caching
+- **Real-time updates**: Fast verification status updates
+
+#### API Performance
+- **Optimized verification checks**: Fast verification status validation
+- **Efficient middleware**: Minimal overhead for verification enforcement
+- **Quick status updates**: Fast verification status changes
+- **Debug information**: Minimal overhead for verification debugging
+
+### 🔄 Backward Compatibility
+
+#### Existing User Support
+- **Gradual migration**: Existing users can be verified over time
+- **Default status**: Unverified users have appropriate default status
+- **Role-based requirements**: Different verification requirements by role
+- **Optional enforcement**: Verification can be enforced gradually
+
+#### API Compatibility
+- **Existing endpoints**: All existing endpoints remain functional
+- **Enhanced responses**: Additional verification information in responses
+- **Optional features**: Verification features are additive
+- **Migration path**: Clear path for existing user verification
+
+### 🧪 Testing
+
+#### Verification System Testing
+- **Registration testing**: Professional verification during registration
+- **Admin verification testing**: Admin interface functionality
+- **Middleware testing**: Verification enforcement middleware
+- **Status transition testing**: All verification status changes
+
+#### Security Testing
+- **Verification enforcement**: Testing of verification requirements
+- **Admin authorization**: Admin-only verification actions
+- **Duplicate prevention**: License number uniqueness validation
+- **Audit logging**: Verification action logging
+
+### 📈 Future Roadmap
+
+#### Planned Verification Features
+- **Automated verification**: Integration with licensing bodies
+- **Document upload**: License document upload and verification
+- **Expiration tracking**: License expiration monitoring
+- **Renewal workflow**: License renewal process automation
+
 ## [2.0.0] - 2024-12-19
 
 ### 🆕 Major Features Added
