@@ -4,11 +4,26 @@ const { authenticateToken, requireRole, canAccessPatient } = require('../middlew
 const Patient = require('../models/Patient');
 const logger = require('../utils/logger');
 const mongoose = require('mongoose');
+const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
 
+// Rate limiting for mutation endpoints
+const mutationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // limit each IP to 50 requests per windowMs
+  message: {
+    error: 'Too many requests from this IP, please try again after 15 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Apply authentication to all routes
 router.use(authenticateToken);
+
+// Apply rate limiting to mutation endpoints
+router.use(['/'], mutationLimiter);
 
 // Validation middleware
 const validatePatient = [
@@ -69,13 +84,138 @@ const validateAllergy = [
 // @access  Private
 router.get('/', requireRole(['admin', 'doctor', 'nurse']), async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
+    // --- Robust Pagination Validation ---
+    const { page, limit } = req.query;
+    
+    // Parse page parameter with strict validation
+    let pageNumber;
+    if (page !== undefined) {
+      pageNumber = parseInt(page, 10);
+      if (isNaN(pageNumber) || pageNumber <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid query parameter',
+          message: 'Pagination "page" parameter must be a positive integer.'
+        });
+      }
+    } else {
+      pageNumber = 1; // Default to page 1 if not provided
+    }
+    
+    // Parse limit parameter with strict validation
+    let limitNumber;
+    if (limit !== undefined) {
+      limitNumber = parseInt(limit, 10);
+      if (isNaN(limitNumber) || limitNumber <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid query parameter',
+          message: 'Pagination "limit" parameter must be a positive integer.'
+        });
+      }
+      
+      // Add maximum limit constraint for performance
+      if (limitNumber > 100) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid query parameter',
+          message: 'Pagination "limit" cannot exceed 100.'
+        });
+      }
+    } else {
+      limitNumber = 20; // Default to 20 if not provided
+    }
+    
+    const skip = (pageNumber - 1) * limitNumber;
+    // --- END Pagination Validation ---
 
     // Build query
     const query = {};
     
+    // Define allowed filterable fields to prevent injection
+    const allowedFilterFields = [
+      'fullName', 'firstName', 'lastName', 'patientId', 'email', 'phoneNumber',
+      'gender', 'county', 'subCounty', 'isActive', 'checkInStatus', 'bloodType',
+      'assignedDepartment', 'nationalId', 'age', 'dateOfBirth'
+    ];
+    
+    // Validate filterBy parameter if provided
+    if (req.query.filterBy && !allowedFilterFields.includes(req.query.filterBy)) {
+      logger.warn(`Invalid filter field provided: ${req.query.filterBy}`, { 
+        userId: req.user._id,
+        attemptedFilter: req.query.filterBy,
+        allowedFilters: allowedFilterFields
+      });
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid query parameter',
+        message: `Filtering by '${req.query.filterBy}' is not supported.`,
+        details: `Allowed filter fields: ${allowedFilterFields.join(', ')}`
+      });
+    }
+    
+    // Apply filterBy and filterValue if both are provided and valid
+    if (req.query.filterBy && req.query.filterValue) {
+      const filterBy = req.query.filterBy;
+      const filterValue = req.query.filterValue;
+      
+      // Handle different field types with appropriate filtering logic
+      if (['fullName', 'firstName', 'lastName', 'email', 'patientId', 'county', 'subCounty'].includes(filterBy)) {
+        // String fields with case-insensitive regex search
+        query[filterBy] = { $regex: filterValue, $options: 'i' };
+      } else if (filterBy === 'phoneNumber') {
+        // Phone number with case-insensitive regex search
+        query[filterBy] = { $regex: filterValue, $options: 'i' };
+      } else if (filterBy === 'nationalId') {
+        // National ID with exact match
+        query[filterBy] = filterValue;
+      } else if (filterBy === 'gender') {
+        // Gender with exact match (case-insensitive)
+        query[filterBy] = { $regex: `^${filterValue}$`, $options: 'i' };
+      } else if (filterBy === 'bloodType') {
+        // Blood type with exact match (case-insensitive)
+        query[filterBy] = { $regex: `^${filterValue}$`, $options: 'i' };
+      } else if (filterBy === 'checkInStatus') {
+        // Check-in status with exact match (case-insensitive)
+        query[filterBy] = { $regex: `^${filterValue}$`, $options: 'i' };
+      } else if (filterBy === 'assignedDepartment') {
+        // Assigned department with case-insensitive regex search
+        query[filterBy] = { $regex: filterValue, $options: 'i' };
+      } else if (filterBy === 'isActive') {
+        // Boolean field
+        query[filterBy] = filterValue.toLowerCase() === 'true';
+      } else if (filterBy === 'age') {
+        // Age filtering by dateOfBirth range (approximate)
+        const age = parseInt(filterValue);
+        if (isNaN(age)) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid age value',
+            message: 'Age must be a valid number'
+          });
+        }
+        const today = new Date();
+        const minDate = new Date(today.getFullYear() - age - 1, today.getMonth(), today.getDate());
+        const maxDate = new Date(today.getFullYear() - age, today.getMonth(), today.getDate());
+        query.dateOfBirth = { $gte: minDate, $lte: maxDate };
+      } else if (filterBy === 'dateOfBirth') {
+        // Date of birth with range support
+        const dateValue = new Date(filterValue);
+        if (isNaN(dateValue.getTime())) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid date value',
+            message: 'Date of birth must be a valid date (YYYY-MM-DD format)'
+          });
+        }
+        query[filterBy] = dateValue;
+      } else {
+        // Default exact match for other fields
+        query[filterBy] = filterValue;
+      }
+    }
+    
+    // Legacy search functionality (maintains backward compatibility)
     if (req.query.search) {
       const searchRegex = new RegExp(req.query.search, 'i');
       query.$or = [
@@ -87,6 +227,7 @@ router.get('/', requireRole(['admin', 'doctor', 'nurse']), async (req, res) => {
       ];
     }
 
+    // Legacy individual filter parameters (maintains backward compatibility)
     if (req.query.county) {
       query['address.county'] = req.query.county;
     }
@@ -103,29 +244,135 @@ router.get('/', requireRole(['admin', 'doctor', 'nurse']), async (req, res) => {
       query.isActive = req.query.isActive === 'true';
     }
 
+    if (req.query.checkInStatus) {
+      query.checkInStatus = req.query.checkInStatus;
+    }
+
+    if (req.query.assignedDepartment) {
+      query.assignedDepartment = req.query.assignedDepartment;
+    }
+
+    // Build sort object
+    let sort = { createdAt: -1 }; // default sort
+    
+    // Define allowed sortable fields to prevent injection
+    const allowedSortFields = [
+      'createdAt', 'updatedAt', 'firstName', 'lastName', 'fullName', 
+      'dateOfBirth', 'age', 'patientId', 'checkInStatus', 'isActive',
+      'gender', 'bloodType', 'county'
+    ];
+    
+    // Support both formats: single 'sort' parameter and separate 'sortBy'/'sortOrder' parameters
+    if (req.query.sortBy && req.query.sortOrder) {
+      // New format: separate sortBy and sortOrder parameters
+      const sortBy = req.query.sortBy;
+      const sortOrder = req.query.sortOrder.toLowerCase();
+      
+      if (allowedSortFields.includes(sortBy)) {
+        const order = (sortOrder === 'desc') ? -1 : 1;
+        
+        // Handle virtual fields that can't be sorted directly in MongoDB
+        if (sortBy === 'fullName') {
+          // Sort by firstName first, then lastName for fullName
+          sort = { firstName: order, lastName: order };
+        } else if (sortBy === 'age') {
+          // Sort by dateOfBirth (younger people have later dates)
+          sort = { dateOfBirth: order === 1 ? -1 : 1 };
+        } else if (sortBy === 'county') {
+          // Sort by address.county
+          sort = { 'address.county': order };
+        } else {
+          sort = { [sortBy]: order };
+        }
+      } else {
+        return res.status(400).json({
+          error: 'Invalid sort field',
+          details: `Allowed sort fields: ${allowedSortFields.join(', ')}`
+        });
+      }
+    } else if (req.query.sort) {
+      // Legacy format: single sort parameter with minus prefix for descending
+      const sortField = req.query.sort.replace(/^-/, ''); // remove leading minus
+      const sortOrder = req.query.sort.startsWith('-') ? -1 : 1;
+      
+      if (allowedSortFields.includes(sortField)) {
+        // Handle virtual fields that can't be sorted directly in MongoDB
+        if (sortField === 'fullName') {
+          // Sort by firstName first, then lastName for fullName
+          sort = { firstName: sortOrder, lastName: sortOrder };
+        } else if (sortField === 'age') {
+          // Sort by dateOfBirth (younger people have later dates)
+          sort = { dateOfBirth: sortOrder === 1 ? -1 : 1 };
+        } else if (sortField === 'county') {
+          // Sort by address.county
+          sort = { 'address.county': sortOrder };
+        } else {
+          sort = { [sortField]: sortOrder };
+        }
+      } else {
+        return res.status(400).json({
+          error: 'Invalid sort field',
+          details: `Allowed sort fields: ${allowedSortFields.join(', ')}`
+        });
+      }
+    }
+
     // Execute query
     const patients = await Patient.find(query)
-      .sort({ createdAt: -1 })
+      .populate('createdBy', 'fullName')
+      .populate('assignedDoctor', 'fullName')
+      .sort(sort)
       .skip(skip)
-      .limit(limit);
+      .limit(limitNumber);
 
     const total = await Patient.countDocuments(query);
 
+    // Use role-based masking for patient summaries
+    const maskedPatients = patients.map(patient => 
+      patient.getSummaryForRole(req.user.role)
+    );
+
     logger.audit('patients_listed', req.user._id, 'patients', {
       count: patients.length,
-      page,
-      limit
+      page: pageNumber,
+      limit: limitNumber,
+      userRole: req.user.role,
+      sort: sort,
+      query: req.query,
+      filterBy: req.query.filterBy,
+      filterValue: req.query.filterValue
     });
 
     res.json({
       success: true,
       data: {
-        patients: patients.map(p => p.getSummary()),
+        patients: maskedPatients,
         pagination: {
-          page,
-          limit,
+          page: pageNumber,
+          limit: limitNumber,
           total,
-          pages: Math.ceil(total / limit)
+          pages: Math.ceil(total / limitNumber)
+        },
+        // Add debugging information for sorting and filtering
+        debug: {
+          sortApplied: sort,
+          sortBy: req.query.sortBy,
+          sortOrder: req.query.sortOrder,
+          legacySort: req.query.sort,
+          filterBy: req.query.filterBy,
+          filterValue: req.query.filterValue,
+          allowedFilterFields: [
+            'fullName', 'firstName', 'lastName', 'patientId', 'email', 'phoneNumber',
+            'gender', 'county', 'subCounty', 'isActive', 'checkInStatus', 'bloodType',
+            'assignedDepartment', 'nationalId', 'age', 'dateOfBirth'
+          ],
+          pagination: {
+            requestedPage: req.query.page,
+            requestedLimit: req.query.limit,
+            appliedPage: pageNumber,
+            appliedLimit: limitNumber,
+            skip: skip
+          }
         }
       }
     });
@@ -171,7 +418,11 @@ router.get('/:id', canAccessPatient('id'), async (req, res) => {
   }
 
   try {
-    const patient = await Patient.findById(id).select('-password');
+    // Remove .select('-password') to include all fields including audit fields
+    const patient = await Patient.findById(id)
+      .populate('createdBy', 'fullName email')
+      .populate('updatedBy', 'fullName email')
+      .populate('assignedDoctor', 'fullName email');
 
     if (!patient) {
       logger.warn(`Attempt to retrieve non-existent patient with ID: ${id}`, { userId: req.user._id });
@@ -180,10 +431,29 @@ router.get('/:id', canAccessPatient('id'), async (req, res) => {
       });
     }
 
+    // Get the summary and add audit fields explicitly
+    const patientSummary = patient.getSummaryForRole(req.user.role);
+    const patientData = {
+      ...patientSummary,
+      // Explicitly include audit fields
+      createdBy: patient.createdBy ? {
+        _id: patient.createdBy._id,
+        fullName: patient.createdBy.fullName,
+        email: patient.createdBy.email
+      } : null,
+      updatedBy: patient.updatedBy ? {
+        _id: patient.updatedBy._id,
+        fullName: patient.updatedBy.fullName,
+        email: patient.updatedBy.email
+      } : null,
+      createdAt: patient.createdAt,
+      updatedAt: patient.updatedAt
+    };
+
     res.json({
       success: true,
       data: {
-        patient: patient.getSummary()
+        patient: patientData
       }
     });
   } catch (error) {
@@ -230,6 +500,12 @@ router.post('/', requireRole(['admin', 'doctor', 'nurse']), validatePatient, asy
 
     await patient.save();
 
+    // Fetch the created patient with populated fields for response
+    const createdPatient = await Patient.findById(patient._id)
+      .populate('createdBy', 'fullName email')
+      .populate('updatedBy', 'fullName email')
+      .populate('assignedDoctor', 'fullName email');
+
     logger.audit('patient_created', req.user._id, `patient:${patient.patientId}`, {
       patientId: patient.patientId,
       patientName: patient.fullName
@@ -239,7 +515,7 @@ router.post('/', requireRole(['admin', 'doctor', 'nurse']), validatePatient, asy
       success: true,
       message: 'Patient created successfully',
       data: {
-        patient: patient.getSummary()
+        patient: createdPatient.getSummaryForRole(req.user.role)
       }
     });
   } catch (error) {
@@ -284,7 +560,14 @@ router.put('/:id', canAccessPatient('id'), validatePatient, async (req, res) => 
     // Update patient fields
     Object.assign(patient, req.body);
     patient.updatedBy = req.user._id;
+    patient.updatedAt = new Date();
     await patient.save();
+
+    // Fetch the updated patient with populated fields for response
+    const updatedPatient = await Patient.findById(id)
+      .populate('createdBy', 'fullName email')
+      .populate('updatedBy', 'fullName email')
+      .populate('assignedDoctor', 'fullName email');
 
     logger.audit('patient_updated', req.user._id, `patient:${patient.patientId}`, {
       patientId: patient.patientId,
@@ -295,7 +578,7 @@ router.put('/:id', canAccessPatient('id'), validatePatient, async (req, res) => 
       success: true,
       message: 'Patient updated successfully',
       data: {
-        patient: patient.getSummary()
+        patient: updatedPatient.getSummaryForRole(req.user.role)
       }
     });
   } catch (error) {
@@ -328,6 +611,36 @@ router.patch('/:id', canAccessPatient('id'), async (req, res) => {
       });
     }
 
+    // Explicit check for nationalId immutability
+    if (req.body.nationalId && req.body.nationalId !== patient.nationalId) {
+      logger.warn('SECURITY_EVENT: Attempted to modify immutable nationalId field', {
+        userId: req.user._id,
+        patientId: patient.patientId,
+        currentNationalId: patient.nationalId,
+        attemptedNationalId: req.body.nationalId
+      });
+      return res.status(400).json({
+        error: 'National ID cannot be modified.',
+        details: 'The national ID field is immutable and cannot be changed once set.'
+      });
+    }
+
+    // Prevent updates to other immutable fields
+    const immutableFields = ['patientId', 'createdBy', 'createdAt'];
+    const attemptedImmutableUpdates = immutableFields.filter(field => req.body.hasOwnProperty(field));
+    
+    if (attemptedImmutableUpdates.length > 0) {
+      logger.warn('SECURITY_EVENT: Attempted to update immutable fields', {
+        userId: req.user._id,
+        patientId: patient.patientId,
+        attemptedFields: attemptedImmutableUpdates
+      });
+      return res.status(400).json({
+        error: 'Cannot update immutable fields',
+        details: `The following fields cannot be updated: ${attemptedImmutableUpdates.join(', ')}`
+      });
+    }
+
     // Update only provided fields
     Object.keys(req.body).forEach(key => {
       if (patient.schema.paths[key]) {
@@ -336,7 +649,14 @@ router.patch('/:id', canAccessPatient('id'), async (req, res) => {
     });
     
     patient.updatedBy = req.user._id;
+    patient.updatedAt = new Date();
     await patient.save();
+
+    // Fetch the updated patient with populated fields for response
+    const updatedPatient = await Patient.findById(id)
+      .populate('createdBy', 'fullName email')
+      .populate('updatedBy', 'fullName email')
+      .populate('assignedDoctor', 'fullName email');
 
     logger.audit('patient_partially_updated', req.user._id, `patient:${patient.patientId}`, {
       patientId: patient.patientId,
@@ -347,7 +667,7 @@ router.patch('/:id', canAccessPatient('id'), async (req, res) => {
       success: true,
       message: 'Patient updated successfully',
       data: {
-        patient: patient.getSummary()
+        patient: updatedPatient.getSummaryForRole(req.user.role)
       }
     });
   } catch (error) {
@@ -416,11 +736,10 @@ router.delete('/bulk', requireRole(['admin']), async (req, res) => {
 // @route   DELETE /api/v1/patients/:id
 // @desc    Delete patient (soft delete)
 // @access  Private
-router.delete('/:id', requireRole(['admin']), canAccessPatient('id'), async (req, res) => {
+router.delete('/:id', requireRole(['admin']), async (req, res) => {
   const { id } = req.params;
 
   // Validation guard: Check if the provided 'id' is a valid MongoDB ObjectId format
-  // This happens before any database query is attempted
   if (!mongoose.Types.ObjectId.isValid(id)) {
     logger.warn(`Invalid ObjectId format received for patient deletion: ${id}`, { userId: req.user._id });
     return res.status(400).json({ error: 'Invalid patient ID format.' });
@@ -436,14 +755,131 @@ router.delete('/:id', requireRole(['admin']), canAccessPatient('id'), async (req
       });
     }
 
-    // Soft delete
+    // Prevent double-deletion of soft-deleted patients
+    if (!patient.isActive) {
+      logger.warn(`Attempt to delete already soft-deleted patient with ID: ${id}`, { userId: req.user._id });
+      return res.status(404).json({
+        error: 'Patient not found or already deleted'
+      });
+    }
+
+    // Check for embedded active records before deletion
+    const linkedRecords = [];
+
+    // Check allergies
+    if (patient.allergies && patient.allergies.length > 0) {
+      linkedRecords.push({
+        type: 'allergies',
+        count: patient.allergies.length,
+        message: 'Patient has active allergy records'
+      });
+    }
+
+    // Check medical history
+    if (patient.medicalHistory && patient.medicalHistory.length > 0) {
+      const activeConditions = patient.medicalHistory.filter(condition => 
+        condition.status === 'active'
+      );
+      if (activeConditions.length > 0) {
+        linkedRecords.push({
+          type: 'medical_history',
+          count: activeConditions.length,
+          message: 'Patient has active medical conditions'
+        });
+      }
+    }
+
+    // Check vital signs
+    if (patient.vitalSigns && patient.vitalSigns.length > 0) {
+      linkedRecords.push({
+        type: 'vital_signs',
+        count: patient.vitalSigns.length,
+        message: 'Patient has vital signs records'
+      });
+    }
+
+    // Check insurance details
+    if (patient.insuranceDetails && patient.insuranceDetails.length > 0) {
+      const activeInsurance = patient.insuranceDetails.filter(insurance => 
+        insurance.isActive
+      );
+      if (activeInsurance.length > 0) {
+        linkedRecords.push({
+          type: 'insurance',
+          count: activeInsurance.length,
+          message: 'Patient has active insurance policies'
+        });
+      }
+    }
+
+    // Check uploaded files
+    if (patient.files && patient.files.length > 0) {
+      linkedRecords.push({
+        type: 'files',
+        count: patient.files.length,
+        message: 'Patient has uploaded medical files'
+      });
+    }
+
+    // Check for linked records in other collections
+    const MedicalRecord = require('../models/MedicalRecord');
+    const Encounter = require('../models/Encounter');
+
+    // Check medical records
+    const medicalRecords = await MedicalRecord.find({
+      patientId: patient._id,
+      isActive: true
+    }).limit(1);
+
+    if (medicalRecords.length > 0) {
+      linkedRecords.push({
+        type: 'medical_records',
+        count: medicalRecords.length,
+        message: 'Patient has linked medical records'
+      });
+    }
+
+    // Check encounters
+    const encounters = await Encounter.find({
+      patientId: patient._id,
+      isActive: true
+    }).limit(1);
+
+    if (encounters.length > 0) {
+      linkedRecords.push({
+        type: 'encounters',
+        count: encounters.length,
+        message: 'Patient has active encounters'
+      });
+    }
+
+    // If any linked records exist, reject the deletion
+    if (linkedRecords.length > 0) {
+      logger.warn(`Attempt to delete patient with linked active records: ${id}`, { 
+        userId: req.user._id,
+        linkedRecords: linkedRecords
+      });
+      
+      return res.status(409).json({
+        error: 'Cannot delete patient with active linked records',
+        details: 'Please archive or delete the linked records first',
+        linkedRecords: linkedRecords.map(record => ({
+          type: record.type,
+          count: record.count,
+          message: record.message
+        }))
+      });
+    }
+
+    // Soft delete the patient
     patient.isActive = false;
     patient.updatedBy = req.user._id;
+    patient.updatedAt = new Date();
     await patient.save();
 
     logger.audit('patient_deleted', req.user._id, `patient:${patient.patientId}`, {
       patientId: patient.patientId,
-      patientName: patient.fullName
+      patientName: `${patient.firstName} ${patient.lastName}`
     });
 
     res.json({
@@ -453,7 +889,7 @@ router.delete('/:id', requireRole(['admin']), canAccessPatient('id'), async (req
   } catch (error) {
     logger.error('Delete patient failed:', error);
     res.status(500).json({
-      error: 'Failed to delete patient due to a server error.'
+      error: 'Failed to delete patient'
     });
   }
 });
@@ -770,6 +1206,234 @@ router.get('/:id/vital-signs', canAccessPatient('id'), async (req, res) => {
     res.status(500).json({
       error: 'Failed to get vital signs'
     });
+  }
+});
+
+// @route   PATCH /api/v1/patients/:id/checkin
+// @desc    Update patient check-in status
+// @access  Private
+router.patch('/:id/checkin', requireRole(['admin', 'doctor', 'nurse']), async (req, res) => {
+  const { id } = req.params;
+  
+  // Accept both 'status' and 'checkInStatus' field names for flexibility
+  const checkInStatus = req.body.checkInStatus || req.body.status;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: 'Invalid patient ID format.' });
+  }
+
+  if (!checkInStatus) {
+    return res.status(400).json({ 
+      error: 'Missing check-in status. Please provide "checkInStatus" or "status" field.',
+      validValues: ['not_admitted', 'admitted', 'discharged']
+    });
+  }
+
+  // Validate against the actual schema enum values
+  const validStatuses = ['not_admitted', 'admitted', 'discharged'];
+  if (!validStatuses.includes(checkInStatus)) {
+    return res.status(400).json({ 
+      error: 'Invalid check-in status.',
+      details: `Received: "${checkInStatus}". Expected one of: ${validStatuses.join(', ')}.`,
+      validValues: validStatuses
+    });
+  }
+
+  try {
+    const patient = await Patient.findById(id);
+    if (!patient) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    // Prevent re-admission if already admitted
+    if (checkInStatus === 'admitted' && patient.checkInStatus === 'admitted') {
+      return res.status(400).json({ 
+        error: 'Patient is already admitted. Discharge first before re-admission.' 
+      });
+    }
+
+    // Prevent discharge if not admitted
+    if (checkInStatus === 'discharged' && patient.checkInStatus !== 'admitted') {
+      return res.status(400).json({ 
+        error: 'Patient must be admitted before being discharged.',
+        currentStatus: patient.checkInStatus
+      });
+    }
+
+    patient.checkInStatus = checkInStatus;
+    patient.checkInDate = checkInStatus === 'admitted' ? new Date() : null;
+    patient.checkedInBy = checkInStatus === 'admitted' ? req.user._id : null;
+    patient.updatedBy = req.user._id;
+    patient.updatedAt = new Date();
+
+    await patient.save();
+
+    // Fetch the updated patient with populated fields for response
+    const updatedPatient = await Patient.findById(id)
+      .populate('createdBy', 'fullName email')
+      .populate('updatedBy', 'fullName email')
+      .populate('assignedDoctor', 'fullName email');
+
+    logger.audit('patient_checkin_updated', req.user._id, `patient:${patient.patientId}`, {
+      patientId: patient.patientId,
+      checkInStatus,
+      action: checkInStatus === 'admitted' ? 'admitted' : checkInStatus === 'discharged' ? 'discharged' : 'status_updated'
+    });
+
+    res.json({
+      success: true,
+      message: `Patient ${checkInStatus} successfully`,
+      data: {
+        patient: updatedPatient.getSummaryForRole(req.user.role)
+      }
+    });
+  } catch (error) {
+    logger.error('Patient check-in update failed:', error);
+    res.status(500).json({ error: 'Failed to update patient check-in status' });
+  }
+});
+
+// @route   PATCH /api/v1/patients/:id/assign
+// @desc    Assign a doctor to a patient
+// @access  Private
+router.patch('/:id/assign', requireRole(['admin', 'doctor']), async (req, res) => {
+  const { id } = req.params;
+  const { assignedDoctor, assignedDepartment } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: 'Invalid patient ID format.' });
+  }
+
+  if (!assignedDoctor || !assignedDepartment) {
+    return res.status(400).json({ error: 'Both assignedDoctor and assignedDepartment are required.' });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(assignedDoctor)) {
+    return res.status(400).json({ error: 'Invalid doctor ID format.' });
+  }
+
+  try {
+    // Verify doctor exists and is active
+    const User = require('../models/User');
+    const doctor = await User.findById(assignedDoctor);
+    if (!doctor || !doctor.isActive || !['doctor', 'admin'].includes(doctor.role)) {
+      return res.status(400).json({ error: 'Invalid or inactive doctor specified.' });
+    }
+
+    const patient = await Patient.findById(id);
+    if (!patient) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    // Update assignment
+    patient.assignedDoctor = assignedDoctor;
+    patient.assignedDepartment = assignedDepartment;
+    patient.updatedBy = req.user._id;
+    patient.updatedAt = new Date();
+
+    // Add to assignment history
+    patient.assignmentHistory.push({
+      doctorId: assignedDoctor,
+      department: assignedDepartment,
+      assignedBy: req.user._id
+    });
+
+    await patient.save();
+
+    logger.audit('patient_assigned', req.user._id, `patient:${patient.patientId}`, {
+      patientId: patient.patientId,
+      assignedDoctor,
+      assignedDepartment
+    });
+
+    res.json({
+      success: true,
+      message: 'Patient assigned successfully',
+      data: {
+        patient: patient.getSummaryForRole(req.user.role)
+      }
+    });
+  } catch (error) {
+    logger.error('Patient assignment failed:', error);
+    res.status(500).json({ error: 'Failed to assign patient' });
+  }
+});
+
+// @route   GET /api/v1/patients/export
+// @desc    Export patients data
+// @access  Private (Admin only)
+router.get('/export', requireRole(['admin']), async (req, res) => {
+  try {
+    const { format = 'csv', department, startDate, endDate } = req.query;
+    
+    if (!['csv', 'xlsx'].includes(format)) {
+      return res.status(400).json({ error: 'Invalid format. Must be "csv" or "xlsx".' });
+    }
+
+    // Build query
+    const query = {};
+    if (department) {
+      query.assignedDepartment = department;
+    }
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    const patients = await Patient.find(query)
+      .populate('createdBy', 'fullName email')
+      .populate('assignedDoctor', 'fullName email')
+      .sort({ createdAt: -1 });
+
+    // Transform data for export
+    const exportData = patients.map(patient => ({
+      patientId: patient.patientId,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      nationalId: patient.nationalId,
+      dateOfBirth: patient.dateOfBirth,
+      gender: patient.gender,
+      phoneNumber: patient.phoneNumber,
+      email: patient.email,
+      county: patient.address?.county,
+      assignedDepartment: patient.assignedDepartment,
+      checkInStatus: patient.checkInStatus,
+      createdAt: patient.createdAt,
+      createdBy: patient.createdBy?.fullName || 'N/A',
+      assignedDoctor: patient.assignedDoctor?.fullName || 'N/A'
+    }));
+
+    if (format === 'csv') {
+      // Set headers for CSV download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=patients-${new Date().toISOString().split('T')[0]}.csv`);
+      
+      // Create CSV content
+      const headers = Object.keys(exportData[0] || {}).join(',');
+      const rows = exportData.map(row => Object.values(row).map(value => 
+        typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
+      ).join(','));
+      
+      const csvContent = [headers, ...rows].join('\n');
+      res.send(csvContent);
+    } else {
+      // For xlsx, return JSON data (you can implement xlsx generation later)
+      res.json({
+        success: true,
+        data: exportData,
+        count: exportData.length
+      });
+    }
+
+    logger.audit('patients_exported', req.user._id, 'patients_export', {
+      format,
+      count: exportData.length,
+      filters: { department, startDate, endDate }
+    });
+  } catch (error) {
+    logger.error('Patient export failed:', error);
+    res.status(500).json({ error: 'Failed to export patients data' });
   }
 });
 

@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
 const logger = require('../utils/logger');
 const shortid = require('shortid');
+const { 
+  maskEmail, 
+  maskPhoneNumber, 
+  maskNationalId, 
+  maskAddress, 
+  maskEmergencyContact, 
+  maskInsuranceDetails 
+} = require('../utils/masking');
 
 const patientSchema = new mongoose.Schema({
   // Basic Information
@@ -54,6 +62,114 @@ const patientSchema = new mongoose.Schema({
     match: [/^\d{7,8}$/, 'Please provide a valid 7 or 8 digit National ID'],
     required: true
   },
+  
+  // Audit and Tracking Fields
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  
+  updatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  
+  // Check-in/Admission Fields
+  checkInStatus: {
+    type: String,
+    enum: ['not_admitted', 'admitted', 'discharged'],
+    default: 'not_admitted'
+  },
+  
+  checkInDate: {
+    type: Date,
+    default: null
+  },
+  
+  checkedInBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  
+  // Assignment Fields
+  assignedDoctor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  
+  assignedDepartment: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  
+  assignmentHistory: [{
+    doctorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    department: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    assignedAt: {
+      type: Date,
+      default: Date.now
+    },
+    assignedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    }
+  }],
+  
+  // File/Document Uploads
+  files: [{
+    filename: {
+      type: String,
+      required: true
+    },
+    originalName: {
+      type: String,
+      required: true
+    },
+    mimeType: {
+      type: String,
+      required: true
+    },
+    size: {
+      type: Number,
+      required: true
+    },
+    path: {
+      type: String,
+      required: true
+    },
+    fileType: {
+      type: String,
+      enum: ['medical_report', 'prescription', 'lab_result', 'xray', 'other'],
+      default: 'other'
+    },
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    },
+    description: {
+      type: String,
+      trim: true
+    }
+  }],
   
   // Detailed Address (Kenya-specific)
   address: {
@@ -162,58 +278,11 @@ const patientSchema = new mongoose.Schema({
     }
   }],
   
+  // Reference to VitalSign documents (replacing embedded vitalSigns)
+  // This allows for better scalability and draft functionality
   vitalSigns: [{
-    timestamp: {
-      type: Date,
-      required: true,
-      default: Date.now
-    },
-    bloodPressure: {
-      systolic: {
-        type: Number,
-        min: 70,
-        max: 200
-      },
-      diastolic: {
-        type: Number,
-        min: 40,
-        max: 130
-      }
-    },
-    temperature: {
-      type: Number,
-      min: 35,
-      max: 42
-    },
-    pulse: {
-      type: Number,
-      min: 40,
-      max: 200
-    },
-    respiratoryRate: {
-      type: Number,
-      min: 8,
-      max: 40
-    },
-    oxygenSaturation: {
-      type: Number,
-      min: 70,
-      max: 100
-    },
-    weight: {
-      type: Number,
-      min: 1,
-      max: 300
-    },
-    height: {
-      type: Number,
-      min: 50,
-      max: 250
-    },
-    recordedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    }
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'VitalSign'
   }],
   
   // Embedded Administrative Data
@@ -317,14 +386,13 @@ const patientSchema = new mongoose.Schema({
   lastLogin: Date,
   
   // Audit Fields
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+  createdAt: {
+    type: Date,
+    default: Date.now
   },
-  updatedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+  updatedAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true,
@@ -354,15 +422,80 @@ patientSchema.virtual('age').get(function() {
 
 // Virtual for BMI
 patientSchema.virtual('bmi').get(function() {
-  const latestVitals = this.vitalSigns[this.vitalSigns.length - 1];
-  if (!latestVitals || !latestVitals.height || !latestVitals.weight) return null;
-  const heightInMeters = latestVitals.height / 100;
-  return (latestVitals.weight / (heightInMeters * heightInMeters)).toFixed(1);
+  // Ensure vitalSigns is an array and check if it's populated
+  if (!Array.isArray(this.vitalSigns) || this.vitalSigns.length === 0 ||
+      (typeof this.vitalSigns[0] === 'string' || this.vitalSigns[0] instanceof mongoose.Types.ObjectId)) {
+    // If not an array, empty, or unpopulated, return null
+    logger.warn('BMI virtual accessed with unpopulated or invalid vitalSigns array. Returning null.');
+    return null;
+  }
+
+  // At this point, this.vitalSigns should be an array of populated documents
+  const latestVitals = this.vitalSigns[this.vitalSigns.length - 1]; // Assuming the last one is the latest if unsorted
+  
+  if (!latestVitals || !latestVitals.height || !latestVitals.weight ||
+      !latestVitals.height.value || !latestVitals.weight.value) { // Check nested values too
+    return null;
+  }
+
+  // Ensure units are consistent for calculation, or convert as needed
+  let weightKg = latestVitals.weight.value;
+  let heightMeters = latestVitals.height.value;
+
+  if (latestVitals.weight.unit === 'lbs') {
+    weightKg = latestVitals.weight.value * 0.453592; // lbs to kg
+  }
+  if (latestVitals.height.unit === 'in') {
+    heightMeters = latestVitals.height.value * 0.0254; // inches to meters
+  } else if (latestVitals.height.unit === 'cm') {
+    heightMeters = latestVitals.height.value / 100; // cm to meters
+  }
+
+  if (heightMeters > 0) {
+    return (weightKg / (heightMeters * heightMeters)).toFixed(1);
+  }
+  return null;
 });
 
 // Virtual for latest vital signs
 patientSchema.virtual('latestVitalSigns').get(function() {
-  return this.vitalSigns.length > 0 ? this.vitalSigns[this.vitalSigns.length - 1] : null;
+  return this.vitalSigns;
+});
+
+// Virtual for latest final vital signs
+patientSchema.virtual('latestFinalVitalSigns').get(function() {
+  if (!this.vitalSigns || this.vitalSigns.length === 0) return null;
+  
+  // Check if vitalSigns are populated (i.e., if the first element is an object, not just an ObjectId string)
+  if (typeof this.vitalSigns[0] === 'string' || this.vitalSigns[0] instanceof mongoose.Types.ObjectId) {
+    logger.warn('latestFinalVitalSigns virtual accessed with unpopulated vitalSigns. Returning null.');
+    return null; // Or handle as appropriate if not populated
+  }
+  
+  // Find the most recent final vital signs
+  const finalVitalSigns = this.vitalSigns.filter(vital => 
+    vital && (vital.status === 'final' || !vital.status) // Handle legacy data
+  );
+  
+  if (finalVitalSigns.length === 0) return null;
+  
+  // Sort by recordedAt and return the most recent
+  return finalVitalSigns.sort((a, b) => 
+    new Date(b.recordedAt || b.timestamp) - new Date(a.recordedAt || a.timestamp)
+  )[0];
+});
+
+// Virtual field to get draft vital signs
+patientSchema.virtual('draftVitalSigns').get(function() {
+  if (!this.vitalSigns || this.vitalSigns.length === 0) return [];
+  
+  // Check if vitalSigns are populated
+  if (typeof this.vitalSigns[0] === 'string' || this.vitalSigns[0] instanceof mongoose.Types.ObjectId) {
+    logger.warn('draftVitalSigns virtual accessed with unpopulated vitalSigns. Returning empty array.');
+    return []; // Or handle as appropriate if not populated
+  }
+  
+  return this.vitalSigns.filter(vital => vital && vital.status === 'draft');
 });
 
 // Virtual for active allergies
@@ -382,12 +515,12 @@ patientSchema.virtual('summary').get(function() {
     bloodType: this.bloodType,
     phoneNumber: this.phoneNumber,
     email: this.email,
-    county: this.address.county,
+    county: this.address ? this.address.county : undefined,
     isActive: this.isActive,
     isVerified: this.isVerified,
-    allergies: this.allergies.length,
-    medicalHistory: this.medicalHistory.length,
-    vitalSigns: this.vitalSigns.length
+    allergies: Array.isArray(this.allergies) ? this.allergies.length : 0,
+    medicalHistory: Array.isArray(this.medicalHistory) ? this.medicalHistory.length : 0,
+    vitalSigns: Array.isArray(this.vitalSigns) ? this.vitalSigns.length : 0
   };
 });
 
@@ -443,13 +576,73 @@ patientSchema.methods.getSummary = function() {
     bloodType: this.bloodType,
     phoneNumber: this.phoneNumber,
     email: this.email,
-    county: this.address.county,
+    county: this.address ? this.address.county : undefined,
     isActive: this.isActive,
     isVerified: this.isVerified,
-    allergies: this.allergies.length,
-    medicalHistory: this.medicalHistory.length,
-    vitalSigns: this.vitalSigns.length
+    allergies: Array.isArray(this.allergies) ? this.allergies.length : 0,
+    medicalHistory: Array.isArray(this.medicalHistory) ? this.medicalHistory.length : 0,
+    vitalSigns: Array.isArray(this.vitalSigns) ? this.vitalSigns.length : 0,
+    createdBy: this.createdBy,
+    updatedBy: this.updatedBy,
+    createdAt: this.createdAt,
+    updatedAt: this.updatedAt,
+    checkInStatus: this.checkInStatus,
+    checkInDate: this.checkInDate,
+    checkedInBy: this.checkedInBy,
+    assignedDoctor: this.assignedDoctor,
+    assignedDepartment: this.assignedDepartment
   };
+};
+
+// Instance method to get patient summary with role-based PII masking
+patientSchema.methods.getSummaryForRole = function(userRole) {
+  const patientObject = this.toObject({ virtuals: true });
+  
+  // Base summary with always-visible fields
+  const summary = {
+    _id: patientObject._id,
+    patientId: patientObject.patientId,
+    fullName: patientObject.fullName,
+    age: patientObject.age,
+    gender: patientObject.gender,
+    bloodType: patientObject.bloodType,
+    county: patientObject.address ? patientObject.address.county : undefined,
+    isActive: patientObject.isActive,
+    isVerified: patientObject.isVerified,
+    allergies: patientObject.allergies ? patientObject.allergies.length : 0,
+    medicalHistory: patientObject.medicalHistory ? patientObject.medicalHistory.length : 0,
+    vitalSigns: patientObject.vitalSigns ? patientObject.vitalSigns.length : 0,
+    createdBy: patientObject.createdBy,
+    updatedBy: patientObject.updatedBy,
+    createdAt: patientObject.createdAt,
+    updatedAt: patientObject.updatedAt,
+    checkInStatus: patientObject.checkInStatus,
+    checkInDate: patientObject.checkInDate,
+    checkedInBy: patientObject.checkedInBy,
+    assignedDoctor: patientObject.assignedDoctor,
+    assignedDepartment: patientObject.assignedDepartment
+  };
+
+  // Conditional PII handling based on role
+  if (userRole === 'admin') {
+    // Admin gets full access to all PII
+    summary.phoneNumber = patientObject.phoneNumber;
+    summary.email = patientObject.email;
+    summary.nationalId = patientObject.nationalId;
+    summary.address = patientObject.address;
+    summary.emergencyContact = patientObject.emergencyContact;
+    summary.insuranceDetails = patientObject.insuranceDetails;
+  } else {
+    // Non-admin roles get masked PII
+    summary.phoneNumber = maskPhoneNumber(patientObject.phoneNumber);
+    summary.email = maskEmail(patientObject.email);
+    summary.nationalId = maskNationalId(patientObject.nationalId);
+    summary.address = maskAddress(patientObject.address);
+    summary.emergencyContact = maskEmergencyContact(patientObject.emergencyContact);
+    summary.insuranceDetails = maskInsuranceDetails(patientObject.insuranceDetails);
+  }
+
+  return summary;
 };
 
 // Static method to find patients by county
@@ -529,6 +722,20 @@ patientSchema.statics.findByCriteria = function(criteria) {
   
   return this.find(query)
     .sort({ firstName: 1, lastName: 1 });
+};
+
+// Method to add vital sign reference (for new VitalSign model)
+patientSchema.methods.addVitalSignReference = function(vitalSignId) {
+  this.vitalSigns.push(vitalSignId);
+  return this.save();
+};
+
+// Method to remove vital sign reference
+patientSchema.methods.removeVitalSignReference = function(vitalSignId) {
+  this.vitalSigns = this.vitalSigns.filter(id => 
+    id.toString() !== vitalSignId.toString()
+  );
+  return this.save();
 };
 
 module.exports = mongoose.model('Patient', patientSchema); 

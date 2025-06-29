@@ -8,6 +8,7 @@ const patientRoutes = require('./patients');
 const medicalRecordRoutes = require('./medicalRecords');
 const userRoutes = require('./users'); // For general user routes like GET /users/:id
 const adminRoutes = require('./adminRoutes'); // Specifically for admin-only management routes
+const vitalSignRoutes = require('./vitalSigns'); // For vital signs management
 
 // --- Public Health & API Info Endpoints ---
 router.get('/health', (req, res) => {
@@ -35,6 +36,7 @@ router.use('/auth', authRoutes); // For /api/v1/auth/login, etc.
 router.use('/patients', patientRoutes); // For /api/v1/patients
 router.use('/medical-records', medicalRecordRoutes); // For /api/v1/medical-records
 router.use('/users', userRoutes); // For /api/v1/users (like GET /users and GET /users/:id)
+router.use('/vital-signs', vitalSignRoutes); // For /api/v1/vital-signs
 
 // The admin routes for managing admins are mounted at the root of the API
 // This makes the routes inside it like /api/v1/admin/admins and /api/v1/admin/users/:id
